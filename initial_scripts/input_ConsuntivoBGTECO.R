@@ -90,4 +90,10 @@ dt_consbe[, (paste0(kc_iva, '_iva')) := lapply(.SD, function(x) { (1 + aliquota)
 
 
 
+# EXPORT ==================================================================================
+
+saveRDS(dt_consbe, file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
+
+
+
 
