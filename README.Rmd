@@ -1,0 +1,49 @@
+ReadMe
+
+introduzione
+
+scopo dell'app:
+
+	automatizzare flow calcolo
+
+	sensitivity (gurdare lo storico)(problema class:date_time)
+
+	forecasting budget annuo in base allo storico del budget
+
+	presenza di warning, avvisi di alert
+
+	simulazioni (modificare i valori, aggiungere clienti, aggiungere lob)
+
+	
+
+BRAKEDOWN
+
+	files:
+
+		Input:
+	
+	 	1) MAIN: Estrazione completa
+
+			per ion meglio se fatture perchè più dettagliate
+		
+			
+
+		2) RICAVI: Clienti
+
+			Extra 1: elenco esportatori
+
+			Extra 2: clienti con plafont
+
+		3) COSTI: 
+		
+			a) extra 3: assicurazioni 
+
+			b) extra 4: mutui 
+
+
+		4) OPERATIONAL (KPI)
+
+
+
+
+	FLOW DIAGRAM 	
