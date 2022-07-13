@@ -1,49 +1,46 @@
-ReadMe
+# INTRODUZIONE
 
-introduzione
+## Scopo del Tool:
 
-scopo dell'app:
+- Automatizzare flow calcolo
 
-	automatizzare flow calcolo
+- Sensitivity
 
-	sensitivity (gurdare lo storico)(problema class:date_time)
+- Forecasting Budget Annuo 
 
-	forecasting budget annuo in base allo storico del budget
+- Presenza di warning; Avvisi Alert
 
-	presenza di warning, avvisi di alert
-
-	simulazioni (modificare i valori, aggiungere clienti, aggiungere lob)
+- Simulazioni (modificare i valori, aggiungere clienti, aggiungere lob....)
 
 	
 
-BRAKEDOWN
+## Bakedown
 
-	files:
+### Input
 
-		Input:
-	
-	 	1) MAIN: Estrazione completa
-
-			per ion meglio se fatture perchè più dettagliate
-		
-			
-
-		2) RICAVI: Clienti
-
-			Extra 1: elenco esportatori
-
-			Extra 2: clienti con plafont
-
-		3) COSTI: 
-		
-			a) extra 3: assicurazioni 
-
-			b) extra 4: mutui 
+#### Files
 
 
-		4) OPERATIONAL (KPI)
+1) MAIN: Estrazione completa
 
 
 
+2) RICAVI: Clienti
 
-	FLOW DIAGRAM 	
+- Extra 1: elenco esportatori
+
+- Extra 2: clienti con plafont
+
+3) COSTI: 
+
+- extra 3: assicurazioni 
+
+- extra 4: mutui 
+
+
+4) OPERATIONAL
+- KPI
+
+
+
+## Flow Diagram 	
