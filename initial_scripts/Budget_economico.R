@@ -12,6 +12,11 @@ library(janitor)
 dt_budget_2022 <- readRDS(file.path('processed', 'tab_budget_2022.rds'))
 
 
+dt_t_cliente_tipo = read.xlsx(file.path('inputs', 'support_trascodifiche.xlsx'), sheet = 'Tipo_Cliente', detectDates = TRUE)
+
+
+
+
 # RICAVI CALCULATION =========================================================================================
 
 kc_bdgeco_ricavi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
@@ -19,12 +24,15 @@ kc_bdgeco_ricavi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno
 kc_bdgeco_ricavi_id = c('ter_cod_adj', kc_bdgeco_ricavi)
 
 
+
+
 ## Income by Line function: Budget_2022 -----------------------------------------
+
 
 
 ricavi_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_ricavi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..kc_bdgeco_ricavi_id]
+    dt_budget_2022_ricavi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_bdgeco_ricavi_id]
     
     if(nrow(dt_budget_2022_ricavi) == 0) {
         
@@ -39,24 +47,47 @@ ricavi_line = function(line, data = dt_budget_2022) {
         
     }
     
+    dt_budget_2022_ricavi[, id := line]
+    
     return(dt_budget_2022_ricavi)
     
 }
 
 
+## Function Test ------------------------
 
-### Function Test --------
-
-ricavi_line('Groupage')
-apply(ricavi_line('Deposito'), 2, sum) 
 
 
 ricavi_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), ricavi_line)
+
+
 names(ricavi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 
 
+dt_ricavi_list <- rbindlist(ricavi_list)
 
 
+
+
+## Export -----------------------------------------
+
+
+
+write.xlsx(dt_ricavi_list, file = file.path('processed', 'ricavi_tab_budget_eco.xlsx'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+# COSTI VARIABILI CALCULATION =========================================================================================
 
 
 
@@ -72,7 +103,7 @@ kc_bdgeco_costi_var_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_var)
 
 costi_variabili_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_costi_variabili = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile' & con_unlg_liv_2_adj != '(Altri costi fissi)', ..kc_bdgeco_costi_var_id] 
+    dt_budget_2022_costi_variabili = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile', ..kc_bdgeco_costi_var_id] 
     
     if(nrow(dt_budget_2022_costi_variabili) == 0) {
         
@@ -88,17 +119,15 @@ costi_variabili_line = function(line, data = dt_budget_2022) {
         
     }
     
+    dt_budget_2022_costi_variabili[, id := line]
+    
     return(dt_budget_2022_costi_variabili)
     
 }
 
 
 
-### Function Test --------
-
-costi_variabili_groupage <- costi_variabili_line('Groupage')
-
-costi_variabili_trasporto <- costi_variabili_line('Trasporto')
+## Function Test --------------------------------------
 
 
 
@@ -108,9 +137,28 @@ costi_variabili_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), cos
 names(costi_variabili_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 
 
+dt_costi_variabili_list <- rbindlist(costi_variabili_list)
 
 
 
+
+## Export -----------------------------------------
+
+
+
+write.xlsx(dt_costi_variabili_list, file = file.path('processed', 'costi_variabili_tab_budget_eco.xlsx'))
+
+
+
+
+
+
+
+
+
+
+
+# COSTI FISSI CALCULATION =========================================================================================
 
 
 
@@ -126,7 +174,7 @@ kc_bdgeco_costi_fissi_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_fissi)
 
 costi_fissi_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_costi_fissi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso' & con_unlg_liv_2_adj != '(Altri costi fissi)', ..kc_bdgeco_costi_fissi_id] 
+    dt_budget_2022_costi_fissi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso', ..kc_bdgeco_costi_fissi_id] 
     
     if(nrow(dt_budget_2022_costi_fissi) == 0) {
         
@@ -142,17 +190,15 @@ costi_fissi_line = function(line, data = dt_budget_2022) {
         
     }
     
+    dt_budget_2022_costi_fissi[, id := line]
+    
     return(dt_budget_2022_costi_fissi)
     
 }
 
 
 
-### Function Test --------
-
-costi_fissi_groupage <- costi_fissi_line('Groupage')
-
-costi_fissi_trasporto <- costi_fissi_line('Trasporto')
+## Function Test --------------------------------------
 
 
 
@@ -163,7 +209,19 @@ names(costi_fissi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 
 
 
+dt_costi_fissi_list <- rbindlist(costi_fissi_list)
 
+
+
+
+
+
+## Export -----------------------------------------
+
+
+
+
+write.xlsx(dt_costi_fissi_list, file = file.path('processed', 'costi_fissi_tab_budget_eco.xlsx'))
 
 
 
@@ -185,7 +243,7 @@ kc_bdgeco_costi_indir_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_indir)
 
 costi_indir_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_costi_indir = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi / Costi indiretti' , ..kc_bdgeco_costi_indir_id] # & con_unlg_liv_2_adj != '(Altri costi fissi)' 
+    dt_budget_2022_costi_indir = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi / Costi indiretti' , ..kc_bdgeco_costi_indir_id] 
     
     if(nrow(dt_budget_2022_costi_indir) == 0) {
         
@@ -200,6 +258,8 @@ costi_indir_line = function(line, data = dt_budget_2022) {
         dt_budget_2022_costi_indir = dcast(dt_budget_2022_costi_indir, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
         
     }
+    
+    dt_budget_2022_costi_indir[, id := line]
     
     return(dt_budget_2022_costi_indir)
     
