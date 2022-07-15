@@ -1,0 +1,28 @@
+---
+title: "Q&A"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Process
+
+### Budget Finanziario
+
+- ...
+
+#### Answer
+
+- ...
+
+## Typos & Mismatches
+
+### Input ...
+
+- ...
+
+#### Answer
+
+- ...
