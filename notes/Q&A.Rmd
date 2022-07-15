@@ -27,7 +27,8 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Answer
 
-- Budget non si sposta
+- Budget non si sposta.
+Fatture a gennaio incasso a marzo, valore di gennaio a tot mesi successivi. Quando si fa budget dei primi mesi del 22 si va a vedere il consuntivo del 21.
 
 - Le condizioni commerciali di norma sono le stesse fra budget e consuntivo
 
