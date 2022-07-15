@@ -9,14 +9,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Process
 
-### Budget Finanziario
+## Budget Finanziario
 
 - Le condizioni_commerciali di consuntivo e budget sono le stesse?
 
 - Può esserci, in generale, una contabilizzazione >12 mesi?
 
 
-# Meno importanti:
+### Meno importanti:
 
 - Qual è il threshold per render certe aziende Top visibili o in Altri?
 
@@ -27,7 +27,11 @@ knitr::opts_chunk$set(echo = TRUE)
 
 #### Answer
 
-- ...
+- Budget non si sposta
+
+- Le condizioni commerciali di norma sono le stesse fra budget e consuntivo
+
+- Contabilizzazione è sempre <12 mesi
 
 ## Typos & Mismatches
 
