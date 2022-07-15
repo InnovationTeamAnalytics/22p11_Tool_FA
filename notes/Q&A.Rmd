@@ -11,7 +11,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Budget Finanziario
 
-- ...
+- Le condizioni_commerciali di consuntivo e budget sono le stesse?
+
+- Può esserci, in generale, una contabilizzazione >12 mesi?
+
+
+# Meno importanti:
+
+- Qual è il threshold per render certe aziende Top visibili o in Altri?
+
+- (Cosa ci fa Good Truck lì visto che NON è Top Groupage?/ Perchè è scritto diverso?)
+
+- In Trasporti qual è il threshold per dire che COOP ALLEANZA 3.0 SOC.COOP. la faccio vedere ma CENTRALE ADRIATICA SOC.COOP. che è sempre Top Trasporti no e la metto in Altri?
+
 
 #### Answer
 
@@ -21,7 +33,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ### Input ...
 
-- ...
+- Attenzione valori condizioni commerciali, un punto di differenza: BON. BANC. VISTA. FATT. e BON. BANC. VISTA. FATT dopo risulta che condizioni commerciali adjusted hanno valori missing
 
 #### Answer
 
