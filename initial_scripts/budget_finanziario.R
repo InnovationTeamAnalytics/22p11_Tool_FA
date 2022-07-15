@@ -5,22 +5,18 @@ library(openxlsx)
 library(innteamUtils)
 library(janitor)
 
-options(scipen = 1000)
+options(scipen = 999, digits = 3)
 
 # UPLOAD DATA----
 
-## Consuntivo e Budget 2022
+## Consuntivo
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
 
-
+## Budget 2022
 
 dt_budget_2022 = readRDS(file.path('processed', 'tab_budget_2022.rds')) |>
     setnames("condizioni_commerciali_nominali_riclassificato", "condizioni_commerciali") |>
     setnames("ter_cod_adj", "soggetti_adj")
-
-
-# condizioni_commerciali di consuntivo e budget sono le stesse?
-#SI
 
 ## Supporti
 
