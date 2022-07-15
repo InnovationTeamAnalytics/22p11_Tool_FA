@@ -33,6 +33,13 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - Contabilizzazione è sempre <12 mesi
 
+
+
+
+- Visibili sono i top fatturato
+
+- (Good Truck no problem)
+
 ## Typos & Mismatches
 
 ### Input ...
