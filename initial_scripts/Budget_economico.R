@@ -32,7 +32,7 @@ kc_bdgeco_ricavi_id = c('ter_cod_adj', kc_bdgeco_ricavi)
 
 ricavi_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_ricavi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_bdgeco_ricavi_id]
+    dt_budget_2022_ricavi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_bdgeco_ricavi_id]
     
     if(nrow(dt_budget_2022_ricavi) == 0) {
         
@@ -46,7 +46,13 @@ ricavi_line = function(line, data = dt_budget_2022) {
         dt_budget_2022_ricavi = dcast(dt_budget_2022_ricavi, ter_cod_adj ~ date, value.var = 'budget_2022')
         
     }
-    
+    # 
+    # groups <- as.numeric(nrow(dt_budget_2022_ricavi))
+    # 
+    # 
+    # dt_budget_2022_ricavi[, totale_anno := rowsum(x = dt_budget_2022_ricavi, group = groups)]
+    # 
+    # 
     dt_budget_2022_ricavi[, id := line]
     
     return(dt_budget_2022_ricavi)
@@ -66,11 +72,40 @@ names(ricavi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 
 dt_ricavi_list <- rbindlist(ricavi_list)
 
+dt_ricavi_list_tot <- dt_ricavi_list[, .
+                                   
+                                   
+                                      (   ter_cod_adj = "total",
+                                          
+                                          gennaio = sum(gennaio), 
+                                       
+                                          febbraio = sum(febbraio),
+                                       
+                                          marzo = sum(marzo),
+                                       
+                                          aprile = sum (aprile),
+                                       
+                                          maggio = sum(maggio),
+                                       
+                                          giugno = sum(giugno),
+                                       
+                                          luglio = sum(luglio),
+                                       
+                                          agosto = sum(agosto),
+                                       
+                                          settembre = sum(settembre),
+                                       
+                                          ottobre = sum(ottobre),
+                                       
+                                          novembre = sum(novembre),
+                                       
+                                          dicembre = sum(dicembre)) , by = id]
 
+
+rbind(dt_ricavi_list, dt_ricavi_list_tot)
 
 
 ## Export -----------------------------------------
-
 
 
 write.xlsx(dt_ricavi_list, file = file.path('processed', 'ricavi_tab_budget_eco.xlsx'))
@@ -79,9 +114,111 @@ write.xlsx(dt_ricavi_list, file = file.path('processed', 'ricavi_tab_budget_eco.
 
 
 
+# ALTRI RICAVI ---------------------------------
+
+kc_bdgeco_altri_ricavi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+
+kc_bdgeco_altri_ricavi_id = c('ter_cod_adj', kc_bdgeco_altri_ricavi)
 
 
 
+
+altri_ricavi = function(data = dt_budget_2022) {
+    
+    dt_budget_2022_altri_ricavi = data[cdc_raggruppamenti_adj == "Ricavi / Costi indiretti" 
+                                       
+                                       & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj == 'Altri ricavi' , ..kc_bdgeco_altri_ricavi_id]
+    
+    if(nrow(dt_budget_2022_altri_ricavi) == 0) {
+        
+        dt_budget_2022_altri_ricavi = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_ricavi_id)
+        
+    } else {
+        
+        dt_budget_2022_altri_ricavi = melt(dt_budget_2022_altri_ricavi, id.vars = 'ter_cod_adj', measure.vars = kc_bdgeco_altri_ricavi, variable.name = 'date', 'altri_ricavi')
+        dt_budget_2022_altri_ricavi = dt_budget_2022_altri_ricavi[, .(budget_2022 = sum(altri_ricavi, na.rm = TRUE)), by = c('ter_cod_adj', 'date')]
+        
+        dt_budget_2022_altri_ricavi = dcast(dt_budget_2022_altri_ricavi, ter_cod_adj ~ date, value.var = 'budget_2022')
+        
+    }
+    
+    
+    return(dt_budget_2022_altri_ricavi)
+    
+}
+
+
+dt_altri_ricavi <- altri_ricavi()
+
+
+dt_altri_ricavi_tot <- dt_altri_ricavi[, .
+                                     
+                                     
+                                     (   ter_cod_adj = "total",
+                                         
+                                         gennaio = sum(gennaio), 
+                                         
+                                         febbraio = sum(febbraio),
+                                         
+                                         marzo = sum(marzo),
+                                         
+                                         aprile = sum (aprile),
+                                         
+                                         maggio = sum(maggio),
+                                         
+                                         giugno = sum(giugno),
+                                         
+                                         luglio = sum(luglio),
+                                         
+                                         agosto = sum(agosto),
+                                         
+                                         settembre = sum(settembre),
+                                         
+                                         ottobre = sum(ottobre),
+                                         
+                                         novembre = sum(novembre),
+                                         
+                                         dicembre = sum(dicembre))]
+
+
+dt_altri_ricavi_tot[, id := "atri_ricavi"]
+
+dt_altri_ricavi_tot <- setcolorder(dt_altri_ricavi_tot, c("id" , "ter_cod_adj" , "gennaio" , "febbraio", "marzo" , "aprile",
+                                   
+                                   "maggio", "giugno",  "luglio",   "agosto", "settembre", "ottobre", "novembre",   "dicembre"))
+
+
+dt_ricavi_totali_full <- rbind(dt_ricavi_list_tot, dt_altri_ricavi_tot)
+
+
+dt_ricavi_totali_percentuali_full <- dt_ricavi_totali_full[, .
+                                       
+                                       
+                                       ( id = id,
+                                           
+                                           gennaio = gennaio/sum(gennaio), 
+                                           
+                                           febbraio = febbraio/sum(febbraio),
+                                           
+                                           marzo = marzo/sum(marzo),
+                                           
+                                           aprile = aprile/sum(aprile),
+                                           
+                                           maggio = maggio/sum(maggio),
+                                           
+                                           giugno = giugno/sum(giugno),
+                                           
+                                           luglio = luglio/sum(luglio),
+                                           
+                                           agosto = agosto/sum(agosto),
+                                           
+                                           settembre = settembre/sum(settembre),
+                                           
+                                           ottobre = ottobre/sum(ottobre),
+                                           
+                                           novembre = novembre/sum(novembre),
+                                           
+                                           dicembre = dicembre/sum(dicembre))]
 
 
 
@@ -103,7 +240,7 @@ kc_bdgeco_costi_var_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_var)
 
 costi_variabili_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_costi_variabili = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile', ..kc_bdgeco_costi_var_id] 
+    dt_budget_2022_costi_variabili = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile', ..kc_bdgeco_costi_var_id] 
     
     if(nrow(dt_budget_2022_costi_variabili) == 0) {
         
@@ -140,6 +277,99 @@ names(costi_variabili_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 dt_costi_variabili_list <- rbindlist(costi_variabili_list)
 
 
+dt_costi_variabili_list_tot <- dt_costi_variabili_list[, .
+                                     
+                                     
+                                     (   ter_cod_adj = "total",
+                                         
+                                         gennaio = sum(gennaio), 
+                                         
+                                         febbraio = sum(febbraio),
+                                         
+                                         marzo = sum(marzo),
+                                         
+                                         aprile = sum (aprile),
+                                         
+                                         maggio = sum(maggio),
+                                         
+                                         giugno = sum(giugno),
+                                         
+                                         luglio = sum(luglio),
+                                         
+                                         agosto = sum(agosto),
+                                         
+                                         settembre = sum(settembre),
+                                         
+                                         ottobre = sum(ottobre),
+                                         
+                                         novembre = sum(novembre),
+                                         
+                                         dicembre = sum(dicembre)) , by = id]
+
+
+dt_costi_variabili_list_primo_margine <- dt_costi_variabili_list_tot [, .
+                                                           
+                                                           
+                                                           (   id = id,
+                                                               
+                                                               ter_cod_adj = "primio_margine",
+
+                                                               gennaio = gennaio + dt_ricavi_list_tot$gennaio , 
+                                                               
+                                                               febbraio = febbraio + dt_ricavi_list_tot$febbraio,
+                                                               
+                                                               marzo = marzo + dt_ricavi_list_tot$marzo,
+                                                               
+                                                               aprile = aprile + dt_ricavi_list_tot$aprile,
+                                                               
+                                                               maggio = maggio + dt_ricavi_list_tot$maggio,
+                                                               
+                                                               giugno = giugno + dt_ricavi_list_tot$giugno,
+                                                               
+                                                               luglio = luglio + dt_ricavi_list_tot$luglio,
+                                                               
+                                                               agosto = agosto + dt_ricavi_list_tot$agosto,
+                                                               
+                                                               settembre = settembre + dt_ricavi_list_tot$settembre,
+                                                               
+                                                               ottobre = ottobre + dt_ricavi_list_tot$ottobre,
+                                                               
+                                                               novembre = novembre + dt_ricavi_list_tot$novembre,
+                                                               
+                                                               dicembre = dicembre + dt_ricavi_list_tot$dicembre)]
+
+
+dt_costi_variabili_list_primo_margine_percentuale <- dt_costi_variabili_list_primo_margine[, .
+                                                           
+                                                           
+                                                           ( id = id,
+                                                               
+                                                               ter_cod_adj = "primio_margine_%",
+                                                               
+                                                               gennaio = gennaio/dt_ricavi_list_tot$gennaio , 
+                                                               
+                                                               febbraio = febbraio/dt_ricavi_list_tot$febbraio ,
+                                                               
+                                                               marzo = marzo/dt_ricavi_list_tot$marzo ,
+                                                               
+                                                               aprile = aprile/dt_ricavi_list_tot$aprile ,
+                                                               
+                                                               maggio = maggio/dt_ricavi_list_tot$maggio ,
+                                                               
+                                                               giugno = giugno/dt_ricavi_list_tot$giugno ,
+                                                               
+                                                               luglio = luglio/dt_ricavi_list_tot$luglio ,
+                                                               
+                                                               agosto = agosto/dt_ricavi_list_tot$agosto ,
+                                                               
+                                                               settembre = settembre/dt_ricavi_list_tot$settembre ,
+                                                               
+                                                               ottobre = ottobre/dt_ricavi_list_tot$ottobre ,
+                                                               
+                                                               novembre = novembre/dt_ricavi_list_tot$novembre ,
+                                                               
+                                                               dicembre = dicembre/dt_ricavi_list_tot$dicembre)]
+
 
 
 ## Export -----------------------------------------
@@ -174,7 +404,7 @@ kc_bdgeco_costi_fissi_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_fissi)
 
 costi_fissi_line = function(line, data = dt_budget_2022) {
     
-    dt_budget_2022_costi_fissi = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso', ..kc_bdgeco_costi_fissi_id] 
+    dt_budget_2022_costi_fissi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso', ..kc_bdgeco_costi_fissi_id] 
     
     if(nrow(dt_budget_2022_costi_fissi) == 0) {
         
@@ -212,7 +442,101 @@ names(costi_fissi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
 dt_costi_fissi_list <- rbindlist(costi_fissi_list)
 
 
+dt_costi_fissi_list_tot <- dt_costi_fissi_list[, .
+                                                       
+                                                       
+                                                       (   ter_cod_adj = "total",
+                                                           
+                                                           gennaio = sum(gennaio), 
+                                                           
+                                                           febbraio = sum(febbraio),
+                                                           
+                                                           marzo = sum(marzo),
+                                                           
+                                                           aprile = sum (aprile),
+                                                           
+                                                           maggio = sum(maggio),
+                                                           
+                                                           giugno = sum(giugno),
+                                                           
+                                                           luglio = sum(luglio),
+                                                           
+                                                           agosto = sum(agosto),
+                                                           
+                                                           settembre = sum(settembre),
+                                                           
+                                                           ottobre = sum(ottobre),
+                                                           
+                                                           novembre = sum(novembre),
+                                                           
+                                                           dicembre = sum(dicembre)) , by = id]
 
+
+dt_costi_fissi_list_secondo_margine <- dt_costi_fissi_list_tot [, .
+                                                                
+                                                                
+                                                                (   id = id,
+                                                                    
+                                                                    ter_cod_adj = "secondo_margine",
+                                                                    
+                                                                    gennaio = gennaio + dt_costi_variabili_list_primo_margine$gennaio , 
+                                                                    
+                                                                    febbraio = febbraio + dt_costi_variabili_list_primo_margine$febbraio,
+                                                                    
+                                                                    marzo = marzo + dt_costi_variabili_list_primo_margine$marzo,
+                                                                    
+                                                                    aprile = aprile + dt_costi_variabili_list_primo_margine$aprile,
+                                                                    
+                                                                    maggio = maggio + dt_costi_variabili_list_primo_margine$maggio,
+                                                                    
+                                                                    giugno = giugno + dt_costi_variabili_list_primo_margine$giugno,
+                                                                    
+                                                                    luglio = luglio + dt_costi_variabili_list_primo_margine$luglio,
+                                                                    
+                                                                    agosto = agosto + dt_costi_variabili_list_primo_margine$agosto,
+                                                                    
+                                                                    settembre = settembre + dt_costi_variabili_list_primo_margine$settembre,
+                                                                    
+                                                                    ottobre = ottobre + dt_costi_variabili_list_primo_margine$ottobre,
+                                                                    
+                                                                    novembre = novembre + dt_costi_variabili_list_primo_margine$novembre,
+                                                                    
+                                                                    dicembre = dicembre + dt_costi_variabili_list_primo_margine$dicembre)]
+
+
+
+
+
+dt_costi_fissi_list_secondo_margine_percentuale <- dt_costi_fissi_list_secondo_margine[, .
+                                                                                           
+                                                                                           
+                                                                                           ( id = id,
+                                                                                               
+                                                                                               ter_cod_adj = "secondo_margine_%",
+                                                                                               
+                                                                                               gennaio = gennaio/dt_ricavi_list_tot$gennaio , 
+                                                                                               
+                                                                                               febbraio = febbraio/dt_ricavi_list_tot$febbraio ,
+                                                                                               
+                                                                                               marzo = marzo/dt_ricavi_list_tot$marzo ,
+                                                                                               
+                                                                                               aprile = aprile/dt_ricavi_list_tot$aprile ,
+                                                                                               
+                                                                                               maggio = maggio/dt_ricavi_list_tot$maggio ,
+                                                                                               
+                                                                                               giugno = giugno/dt_ricavi_list_tot$giugno ,
+                                                                                               
+                                                                                               luglio = luglio/dt_ricavi_list_tot$luglio ,
+                                                                                               
+                                                                                               agosto = agosto/dt_ricavi_list_tot$agosto ,
+                                                                                               
+                                                                                               settembre = settembre/dt_ricavi_list_tot$settembre ,
+                                                                                               
+                                                                                               ottobre = ottobre/dt_ricavi_list_tot$ottobre ,
+                                                                                               
+                                                                                               novembre = novembre/dt_ricavi_list_tot$novembre ,
+                                                                                               
+                                                                                               dicembre = dicembre/dt_ricavi_list_tot$dicembre)]
 
 
 
@@ -230,7 +554,10 @@ write.xlsx(dt_costi_fissi_list, file = file.path('processed', 'costi_fissi_tab_b
 
 
 
-## Costi indiretti by Line function:  -----------------------------------------
+# COSTI INDIRETTI CALCULATION =========================================================================================
+
+
+
 
 
 kc_bdgeco_costi_indir = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
@@ -241,41 +568,105 @@ kc_bdgeco_costi_indir_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_indir)
 
 
 
-costi_indir_line = function(line, data = dt_budget_2022) {
+dt_budget_2022_costi_indir = dt_budget_2022[tipo_voce == 'Ricavi / Costi indiretti', ..kc_bdgeco_costi_indir_id] 
+
+dt_budget_2022_costi_indir = melt(dt_budget_2022_costi_indir, id.vars = 'con_unlg_liv_2_adj',
+                                  
+                                  measure.vars = kc_bdgeco_costi_indir, variable.name = 'date', 'costi_indir')
+
+dt_budget_2022_costi_indir = dt_budget_2022_costi_indir[, .(budget_2022 = sum(costi_indir, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
+
+dt_budget_2022_costi_indir = dcast(dt_budget_2022_costi_indir, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
+
+
+
+
+
+dt_budget_2022_costi_indir <- dcast(melt(dt_budget_2022_costi_indir, id.vars = "con_unlg_liv_2_adj"), variable ~ con_unlg_liv_2_adj)
+
+
+
+dt_ricavi_totali_percentuali_full_t <- dcast(melt(dt_ricavi_totali_percentuali_full, id.vars = "id"), variable ~ id)
+
+dt_budget_2022_costi_indir <- merge(x = dt_budget_2022_costi_indir, y = dt_ricavi_totali_percentuali_full_t, by = "variable", all = T  )
+
+dt_budget_2022_costi_indir <- clean_names(dt_budget_2022_costi_indir)
+
+
+
+
+
+
+## GROUPAGE --------------------------------------------------------------------------
+
+
+dt_budget_2022_costi_indir_groupage <- dt_budget_2022_costi_indir[, .(
     
-    dt_budget_2022_costi_indir = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi / Costi indiretti' , ..kc_bdgeco_costi_indir_id] 
+    variable = variable, 
     
-    if(nrow(dt_budget_2022_costi_indir) == 0) {
-        
-        dt_budget_2022_costi_indir = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_costi_indir_id)
-        
-    } else {
-        
-        dt_budget_2022_costi_indir = melt(dt_budget_2022_costi_indir, id.vars = 'con_unlg_liv_2_adj', measure.vars = kc_bdgeco_costi_indir, variable.name = 'date', 'costi_indir')
-        
-        dt_budget_2022_costi_indir = dt_budget_2022_costi_indir[, .(budget_2022 = sum(costi_indir, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
-        
-        dt_budget_2022_costi_indir = dcast(dt_budget_2022_costi_indir, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
-        
-    }
+    altri_costi_fissi = altri_costi_fissi*groupage,
+                                        
+    altri_costi_di_funzionamento = altri_costi_di_funzionamento*groupage,      
+                                        
+    assicurazioni = assicurazioni*groupage,                    
+                                        
+    consulenze = consulenze*groupage,                        
+                                        
+    costi_per_godimento_beni_di_terzi = costi_per_godimento_beni_di_terzi*groupage, 
     
-    dt_budget_2022_costi_indir[, id := line]
+    costi_pubblicitari = costi_pubblicitari*groupage,                
+                                        
+    manutenzioni = manutenzioni*groupage,                     
+                                        
+    materiali = materiali*groupage,                         
+                                        
+    oneri_diversi_di_gestione = oneri_diversi_di_gestione*groupage,         
+                                        
+    personale = personale*groupage,                         
+                                        
+    utenze_pulizie_e_vigilanza = utenze_pulizie_e_vigilanza*groupage)]
+
+
+
+## TRASPORTO --------------------------------------------------------------------------
+
+
+
+dt_budget_2022_costi_indir_trasporto <- dt_budget_2022_costi_indir [, .(
     
-    return(dt_budget_2022_costi_indir)
+    variable = variable, 
     
-}
+    altri_costi_fissi = altri_costi_fissi*trasporto,
+    
+    altri_costi_di_funzionamento = altri_costi_di_funzionamento*trasporto,      
+    
+    assicurazioni = assicurazioni*trasporto,                    
+    
+    consulenze = consulenze*trasporto,                        
+    
+    costi_per_godimento_beni_di_terzi = costi_per_godimento_beni_di_terzi*trasporto, 
+    
+    costi_pubblicitari = costi_pubblicitari*trasporto,                
+    
+    manutenzioni = manutenzioni*trasporto,                     
+    
+    materiali = materiali*trasporto,                         
+    
+    oneri_diversi_di_gestione = oneri_diversi_di_gestione*trasporto,         
+    
+    personale = personale*trasporto,                         
+    
+    utenze_pulizie_e_vigilanza = utenze_pulizie_e_vigilanza*trasporto)]
 
 
 
-### Function Test --------
-
-costi_indir_groupage <- costi_indir_line('Groupage')
-
-costi_indir_trasporto <- costi_indir_line('Trasporto')
 
 
+dt_budget_2022_costi_indir_groupage <- dcast(melt(dt_budget_2022_costi_indir_groupage, 
+                                                  
+                                                  id.vars = "variable"), variable ~ variable)
 
-costi_indir_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), costi_indir_line)
 
 
-names(costi_indir_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
+
+
