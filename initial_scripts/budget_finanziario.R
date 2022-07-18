@@ -1,5 +1,6 @@
 #BUDGET FINANZIARIO
 
+# LIBRARIES
 library(data.table)
 library(openxlsx)
 library(innteamUtils)
@@ -8,97 +9,60 @@ library(janitor)
 options(scipen = 999, digits = 3)
 
 # UPLOAD DATA----
-
 ## Consuntivo
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
+dt_consbe = janitor::clean_names(dt_consbe)
+setDT(dt_consbe)
 
 ## Budget 2022
-
 dt_budget_2022 = readRDS(file.path('processed', 'tab_budget_2022.rds')) |>
-    setnames(old = c("condizioni_commerciali_nominali_riclassificato", 'ter_cod_adj'), new = c("condizioni_commerciali", 'soggetti_adj')) 
+    setnames("condizioni_commerciali_nominali_riclassificato", "condizioni_commerciali") |>
+    setnames("ter_cod_adj", "soggetti_adj")
+dt_budget_2022 = janitor::clean_names(dt_budget_2022)
+setDT(dt_budget_2022)
 
-## Supporti
+################################################################################
 
+dt_tot_1 <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+                        gennaio_2021_iva, febbraio_2021_iva, marzo_2021_iva, aprile_2021_iva, maggio_2021_iva, giugno_2021_iva,
+                        luglio_2021_iva, agosto_2021_iva, settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva)]
 
-# Colonne mesi
-mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+dt_tot_2 <- dt_budget_2022[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+                          gennaio_lordo_iva, febbraio_lordo_iva, marzo_lordo_iva, aprile_lordo_iva, maggio_lordo_iva, giugno_lordo_iva,
+                          luglio_lordo_iva, agosto_lordo_iva, settembre_lordo_iva, ottobre_lordo_iva, novembre_lordo_iva, dicembre_lordo_iva)]
 
-col_mesi_id = c("soggetti_adj", keep_cols(dt_consbe, '2022'))
+dt_tot <- rbind(dt_tot_1, dt_tot_2, fill = T)
 
-condizioni_commerciali = dt_consbe[, .(soggetti_adj, condizioni_commerciali)]
+# 0 mesi
+dt_tot <- dt_tot[condizioni_commerciali == "Entro mese in corso", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
+                                                                    "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
 
-differenza = match("mese_x", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali[soggetti_adj]))
+#oppure
+dt_tot <- dt_tot[condizioni_commerciali == "Entro mese in corso", ':=' (gennaio_2022 = gennaio_lordo_iva,
+                         febbraio_2022 = febbraio_lordo_iva,
+                         marzo_2022 = marzo_lordo_iva,
+                         aprile_2022 = aprile_lordo_iva,
+                         maggio_2022 = maggio_lordo_iva,
+                         giugno_2022 = giugno_lordo_iva,
+                         luglio_2022 = luglio_lordo_iva,
+                         agosto_2022 = agosto_lordo_iva,
+                         settembre_2022 = settembre_lordo_iva,
+                         ottobre_2022 = ottobre_lordo_iva,
+                         novembre_2022 = novembre_lordo_iva,
+                         dicembre_2022 = dicembre_lordo_iva)]
 
-#Funzione che trova la differenza fra contabilizzazione
-# calc_diff= function(x){
-#     mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
-#     diff = match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
-#     return(diff)
-# }
+# -1 mese
+dt_tot <- dt_tot[condizioni_commerciali == "Mese successivo", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
+                                                                    "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(dicembre_2021_iva, gennaio_lordo_iva:novembre_lordo_iva)]
 
-calc_diff_contab = function(x, data = dt_consbe){
-    mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
-    diff = match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
-    mesi_new = mesi[match(x, mesi)+diff]
-    
-    
-    if(diff > 0){
-        dt_entrate = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi)+diff]]
-    } else {
-        dt_entrate = dt_consbe[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi) + 12 - diff]]
-    }
-    return(dt_entrate)
-}
+# -2 mesi
+dt_tot <- dt_tot[condizioni_commerciali == "Dopo 2 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
+                                                                "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:ottobre_lordo_iva)]
 
-calc_diff_contab("dicembre")
+# -3 mesi
+dt_tot <- dt_tot[condizioni_commerciali == "Dopo 3 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
+                                                            "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:settebre_lordo_iva)]
 
-
-di = calc_diff("dicembre")
-mesi[di]
-
-lapply(mesi, calc_diff_contab)
-
-
-if(differenza >=0){
-    dt_entrate = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi',..x]
-}
-
-mesi_new = mesi[match("gennaio", mesi)+diff]
-#se differenza >= 0 allora budget, se < 0 allora consuntivo
-if(differenza >=0){
-    dt_entrate = dt_budget_2022
-}
-
-
-if(mesi[match("x", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali))]>0){
-    dt_entrate = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', match(mesi, (12 - ( match("gennaio", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali)))))]
-} else {
-    dt_entrate = dt_consbe[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', match(mesi, (1 + ( match("gennaio", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali)))))]
-}
-
-# ENTRATE GESTIONE CORRENTE by line----
-
-# Se contabilizzazione prima di gennaio 2022, prendi da consuntivo, se no da budget
-# colonna che indica contabilizzazione è condizioni_commerciali
-
-# Tutte le condizioni commerciali sono Dopo "n" mesi (in questo caso - potrebbe capitare che sia prima?)
-n_mesi_contabilizzazione = as.numeric(gsub("\\D", "", condizioni_commerciali))
-
-
-
-
-
-stringdist_join()
-
-### Function Test --------
-
-ricavi_line('Deposito')
-apply(ricavi_line('Deposito'), 2, sum) 
-
-
-ricavi_list = lapply(unique(dt_consbe$cdc_raggruppamenti_adj), ricavi_line)
-names(ricavi_list) = unique(dt_consbe$cdc_raggruppamenti_adj)
-
-
-ricavi_list
-
+# -4 mesi
+dt_tot <- dt_tot[condizioni_commerciali == "Dopo 2 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
+                                                            "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:agosto_lordo_iva)]
