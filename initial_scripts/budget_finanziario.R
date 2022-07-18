@@ -15,38 +15,37 @@ dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds')
 ## Budget 2022
 
 dt_budget_2022 = readRDS(file.path('processed', 'tab_budget_2022.rds')) |>
-    setnames("condizioni_commerciali_nominali_riclassificato", "condizioni_commerciali") |>
-    setnames("ter_cod_adj", "soggetti_adj")
+    setnames(old = c("condizioni_commerciali_nominali_riclassificato", 'ter_cod_adj'), new = c("condizioni_commerciali", 'soggetti_adj')) 
 
 ## Supporti
 
 
 # Colonne mesi
-mesi <- c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
 
-col_mesi_id <- c("soggetti_adj", keep_cols(dt_consbe, '2022'))
+col_mesi_id = c("soggetti_adj", keep_cols(dt_consbe, '2022'))
 
-condizioni_commerciali <- dt_consbe[, .(soggetti_adj, condizioni_commerciali)]
+condizioni_commerciali = dt_consbe[, .(soggetti_adj, condizioni_commerciali)]
 
-differenza <- match("mese_x", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali[soggetti_adj]))
+differenza = match("mese_x", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali[soggetti_adj]))
 
 #Funzione che trova la differenza fra contabilizzazione
-# calc_diff<- function(x){
-#     mesi <- c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
-#     diff <- match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
+# calc_diff= function(x){
+#     mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+#     diff = match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
 #     return(diff)
 # }
 
-calc_diff_contab <- function(x, data = dt_consbe){
-    mesi <- c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
-    diff <- match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
-    mesi_new <- mesi[match(x, mesi)+diff]
+calc_diff_contab = function(x, data = dt_consbe){
+    mesi = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+    diff = match(x, mesi)-as.numeric(gsub("\\D", "", "Dopo 4 mesi"))
+    mesi_new = mesi[match(x, mesi)+diff]
     
     
     if(diff > 0){
-        dt_entrate <- dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi)+diff]]
+        dt_entrate = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi)+diff]]
     } else {
-        dt_entrate <- dt_consbe[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi) + 12 - diff]]
+        dt_entrate = dt_consbe[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi', ..mesi[match(x, mesi) + 12 - diff]]
     }
     return(dt_entrate)
 }
@@ -54,7 +53,7 @@ calc_diff_contab <- function(x, data = dt_consbe){
 calc_diff_contab("dicembre")
 
 
-di <- calc_diff("dicembre")
+di = calc_diff("dicembre")
 mesi[di]
 
 lapply(mesi, calc_diff_contab)
@@ -64,7 +63,7 @@ if(differenza >=0){
     dt_entrate = dt_budget_2022[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi',..x]
 }
 
-mesi_new <- mesi[match("gennaio", mesi)+diff]
+mesi_new = mesi[match("gennaio", mesi)+diff]
 #se differenza >= 0 allora budget, se < 0 allora consuntivo
 if(differenza >=0){
     dt_entrate = dt_budget_2022
@@ -83,7 +82,7 @@ if(mesi[match("x", mesi)-as.numeric(gsub("\\D", "", condizioni_commerciali))]>0)
 # colonna che indica contabilizzazione è condizioni_commerciali
 
 # Tutte le condizioni commerciali sono Dopo "n" mesi (in questo caso - potrebbe capitare che sia prima?)
-n_mesi_contabilizzazione <- as.numeric(gsub("\\D", "", condizioni_commerciali))
+n_mesi_contabilizzazione = as.numeric(gsub("\\D", "", condizioni_commerciali))
 
 
 

@@ -9,7 +9,7 @@ library(janitor)
 
 # UPLOAD DATA =================================================================================================
 
-dt_budget_2022 <- readRDS(file.path('processed', 'tab_budget_2022.rds'))
+dt_budget_eco_current <- readRDS(file.path('processed', 'tab_budget_2022.rds'))
 
 
 dt_t_cliente_tipo = read.xlsx(file.path('inputs', 'support_trascodifiche.xlsx'), sheet = 'Tipo_Cliente', detectDates = TRUE)
@@ -30,32 +30,25 @@ kc_bdgeco_ricavi_id = c('ter_cod_adj', kc_bdgeco_ricavi)
 
 
 
-ricavi_line = function(line, data = dt_budget_2022) {
+ricavi_line = function(line, data = dt_budget_eco_current) {
     
-    dt_budget_2022_ricavi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_bdgeco_ricavi_id]
+    dt_budget_eco_current_ricavi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_bdgeco_ricavi_id]
     
-    if(nrow(dt_budget_2022_ricavi) == 0) {
+    if(nrow(dt_budget_eco_current_ricavi) == 0) {
         
-        dt_budget_2022_ricavi = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_ricavi_id)
+        dt_budget_eco_current_ricavi = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_ricavi_id)
         
     } else {
         
-        dt_budget_2022_ricavi = melt(dt_budget_2022_ricavi, id.vars = 'ter_cod_adj', measure.vars = kc_bdgeco_ricavi, variable.name = 'date', 'ricavi')
-        dt_budget_2022_ricavi = dt_budget_2022_ricavi[, .(budget_2022 = sum(ricavi, na.rm = TRUE)), by = c('ter_cod_adj', 'date')]
+        dt_budget_eco_current_ricavi = melt(dt_budget_eco_current_ricavi, id.vars = 'ter_cod_adj', measure.vars = kc_bdgeco_ricavi, variable.name = 'date', 'ricavi')
+        dt_budget_eco_current_ricavi = dt_budget_eco_current_ricavi[, .(budget_2022 = sum(ricavi, na.rm = TRUE)), by = c('ter_cod_adj', 'date')]
         
-        dt_budget_2022_ricavi = dcast(dt_budget_2022_ricavi, ter_cod_adj ~ date, value.var = 'budget_2022')
+        dt_budget_eco_current_ricavi = dcast(dt_budget_eco_current_ricavi, ter_cod_adj ~ date, value.var = 'budget_2022')
         
     }
-    # 
-    # groups <- as.numeric(nrow(dt_budget_2022_ricavi))
-    # 
-    # 
-    # dt_budget_2022_ricavi[, totale_anno := rowsum(x = dt_budget_2022_ricavi, group = groups)]
-    # 
-    # 
-    dt_budget_2022_ricavi[, id := line]
+    dt_budget_eco_current_ricavi[, id := line]
     
-    return(dt_budget_2022_ricavi)
+    return(dt_budget_eco_current_ricavi)
     
 }
 
@@ -64,10 +57,10 @@ ricavi_line = function(line, data = dt_budget_2022) {
 
 
 
-ricavi_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), ricavi_line)
+ricavi_list = lapply(unique(dt_budget_eco_current$cdc_raggruppamenti_adj), ricavi_line)
 
 
-names(ricavi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
+names(ricavi_list) = unique(dt_budget_eco_current$cdc_raggruppamenti_adj)
 
 
 dt_ricavi_list <- rbindlist(ricavi_list)
@@ -238,27 +231,27 @@ kc_bdgeco_costi_var_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_var)
 
 
 
-costi_variabili_line = function(line, data = dt_budget_2022) {
+costi_variabili_line = function(line, data = dt_budget_eco_current) {
     
-    dt_budget_2022_costi_variabili = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile', ..kc_bdgeco_costi_var_id] 
+    dt_budget_eco_current_costi_variabili = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Variabile', ..kc_bdgeco_costi_var_id] 
     
-    if(nrow(dt_budget_2022_costi_variabili) == 0) {
+    if(nrow(dt_budget_eco_current_costi_variabili) == 0) {
         
-        dt_budget_2022_costi_variabili = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_costi_var_id)
+        dt_budget_eco_current_costi_variabili = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_costi_var_id)
         
     } else {
         
-        dt_budget_2022_costi_variabili = melt(dt_budget_2022_costi_variabili, id.vars = 'con_unlg_liv_2_adj', measure.vars = kc_bdgeco_costi_var, variable.name = 'date', 'costi_variabili')
+        dt_budget_eco_current_costi_variabili = melt(dt_budget_eco_current_costi_variabili, id.vars = 'con_unlg_liv_2_adj', measure.vars = kc_bdgeco_costi_var, variable.name = 'date', 'costi_variabili')
         
-        dt_budget_2022_costi_variabili = dt_budget_2022_costi_variabili[, .(budget_2022 = sum(costi_variabili, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
+        dt_budget_eco_current_costi_variabili = dt_budget_eco_current_costi_variabili[, .(budget_2022 = sum(costi_variabili, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
         
-        dt_budget_2022_costi_variabili = dcast(dt_budget_2022_costi_variabili, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
+        dt_budget_eco_current_costi_variabili = dcast(dt_budget_eco_current_costi_variabili, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
         
     }
     
-    dt_budget_2022_costi_variabili[, id := line]
+    dt_budget_eco_current_costi_variabili[, id := line]
     
-    return(dt_budget_2022_costi_variabili)
+    return(dt_budget_eco_current_costi_variabili)
     
 }
 
@@ -268,10 +261,10 @@ costi_variabili_line = function(line, data = dt_budget_2022) {
 
 
 
-costi_variabili_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), costi_variabili_line)
+costi_variabili_list = lapply(unique(dt_budget_eco_current$cdc_raggruppamenti_adj), costi_variabili_line)
 
 
-names(costi_variabili_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
+names(costi_variabili_list) = unique(dt_budget_eco_current$cdc_raggruppamenti_adj)
 
 
 dt_costi_variabili_list <- rbindlist(costi_variabili_list)
@@ -402,27 +395,27 @@ kc_bdgeco_costi_fissi_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_fissi)
 
 
 
-costi_fissi_line = function(line, data = dt_budget_2022) {
+costi_fissi_line = function(line, data = dt_budget_eco_current) {
     
-    dt_budget_2022_costi_fissi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso', ..kc_bdgeco_costi_fissi_id] 
+    dt_budget_eco_current_costi_fissi = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Fisso', ..kc_bdgeco_costi_fissi_id] 
     
-    if(nrow(dt_budget_2022_costi_fissi) == 0) {
+    if(nrow(dt_budget_eco_current_costi_fissi) == 0) {
         
-        dt_budget_2022_costi_fissi = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_costi_fissi_id)
+        dt_budget_eco_current_costi_fissi = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_bdgeco_costi_fissi_id)
         
     } else {
         
-        dt_budget_2022_costi_fissi = melt(dt_budget_2022_costi_fissi, id.vars = 'con_unlg_liv_2_adj', measure.vars = kc_bdgeco_costi_fissi, variable.name = 'date', 'costi_fissi')
+        dt_budget_eco_current_costi_fissi = melt(dt_budget_eco_current_costi_fissi, id.vars = 'con_unlg_liv_2_adj', measure.vars = kc_bdgeco_costi_fissi, variable.name = 'date', 'costi_fissi')
         
-        dt_budget_2022_costi_fissi = dt_budget_2022_costi_fissi[, .(budget_2022 = sum(costi_fissi, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
+        dt_budget_eco_current_costi_fissi = dt_budget_eco_current_costi_fissi[, .(budget_2022 = sum(costi_fissi, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
         
-        dt_budget_2022_costi_fissi = dcast(dt_budget_2022_costi_fissi, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
+        dt_budget_eco_current_costi_fissi = dcast(dt_budget_eco_current_costi_fissi, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
         
     }
     
-    dt_budget_2022_costi_fissi[, id := line]
+    dt_budget_eco_current_costi_fissi[, id := line]
     
-    return(dt_budget_2022_costi_fissi)
+    return(dt_budget_eco_current_costi_fissi)
     
 }
 
@@ -432,10 +425,10 @@ costi_fissi_line = function(line, data = dt_budget_2022) {
 
 
 
-costi_fissi_list = lapply(unique(dt_budget_2022$cdc_raggruppamenti_adj), costi_fissi_line)
+costi_fissi_list = lapply(unique(dt_budget_eco_current$cdc_raggruppamenti_adj), costi_fissi_line)
 
 
-names(costi_fissi_list) = unique(dt_budget_2022$cdc_raggruppamenti_adj)
+names(costi_fissi_list) = unique(dt_budget_eco_current$cdc_raggruppamenti_adj)
 
 
 
@@ -568,73 +561,15 @@ kc_bdgeco_costi_indir_id = c('con_unlg_liv_2_adj', kc_bdgeco_costi_indir)
 
 
 
-dt_budget_2022_costi_indir = dt_budget_2022[tipo_voce == 'Ricavi / Costi indiretti', ..kc_bdgeco_costi_indir_id] 
-
-dt_budget_2022_costi_indir = melt(dt_budget_2022_costi_indir, id.vars = 'con_unlg_liv_2_adj',
-                                  
-                                  measure.vars = kc_bdgeco_costi_indir, variable.name = 'date', 'costi_indir')
-
-dt_budget_2022_costi_indir = dt_budget_2022_costi_indir[, .(budget_2022 = sum(costi_indir, na.rm = TRUE)), by = c('con_unlg_liv_2_adj', 'date')]
-
-dt_budget_2022_costi_indir = dcast(dt_budget_2022_costi_indir, con_unlg_liv_2_adj ~ date, value.var = 'budget_2022')
-
-
-
-
-
-dt_budget_2022_costi_indir <- dcast(melt(dt_budget_2022_costi_indir, id.vars = "con_unlg_liv_2_adj"), variable ~ con_unlg_liv_2_adj)
-
-
-
-dt_ricavi_totali_percentuali_full_t <- dcast(melt(dt_ricavi_totali_percentuali_full, id.vars = "id"), variable ~ id)
-
-dt_budget_2022_costi_indir <- merge(x = dt_budget_2022_costi_indir, y = dt_ricavi_totali_percentuali_full_t, by = "variable", all = T  )
-
-dt_budget_2022_costi_indir <- clean_names(dt_budget_2022_costi_indir)
-
-
-
-
-
-
-## GROUPAGE --------------------------------------------------------------------------
-
-
-dt_budget_2022_costi_indir_groupage <- dt_budget_2022_costi_indir[, .(
+costi_indir_line = function(line, data = dt_budget_eco_current) {
     
-    variable = variable, 
+    dt_budget_eco_current_costi_indir = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi / Costi indiretti' , ..kc_bdgeco_costi_indir_id] 
     
-    altri_costi_fissi = altri_costi_fissi*groupage,
-                                        
-    altri_costi_di_funzionamento = altri_costi_di_funzionamento*groupage,      
-                                        
-    assicurazioni = assicurazioni*groupage,                    
-                                        
-    consulenze = consulenze*groupage,                        
-                                        
-    costi_per_godimento_beni_di_terzi = costi_per_godimento_beni_di_terzi*groupage, 
+    if(nrow(dt_budget_eco_current_costi_indir) == 0) {
     
-    costi_pubblicitari = costi_pubblicitari*groupage,                
-                                        
-    manutenzioni = manutenzioni*groupage,                     
-                                        
-    materiali = materiali*groupage,                         
-                                        
-    oneri_diversi_di_gestione = oneri_diversi_di_gestione*groupage,         
-                                        
-    personale = personale*groupage,                         
-                                        
-    utenze_pulizie_e_vigilanza = utenze_pulizie_e_vigilanza*groupage)]
-
-
-
-## TRASPORTO --------------------------------------------------------------------------
-
-
-
-dt_budget_2022_costi_indir_trasporto <- dt_budget_2022_costi_indir [, .(
+    dt_budget_eco_current_costi_indir[, id := line]
     
-    variable = variable, 
+    return(dt_budget_eco_current_costi_indir)
     
     altri_costi_fissi = altri_costi_fissi*trasporto,
     
@@ -668,5 +603,7 @@ dt_budget_2022_costi_indir_groupage <- dcast(melt(dt_budget_2022_costi_indir_gro
 
 
 
+costi_indir_list = lapply(unique(dt_budget_eco_current$cdc_raggruppamenti_adj), costi_indir_line)
 
 
+names(costi_indir_list) = unique(dt_budget_eco_current$cdc_raggruppamenti_adj)
