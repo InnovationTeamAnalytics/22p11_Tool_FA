@@ -10,8 +10,11 @@
     # Upload Input Data -----------------------
     
     dt_budget_2022 <- read.xlsx(file.path( "inputs", "budget_2022.xlsx"))
+    
     dt_budget_2022 <- clean_names(dt_budget_2022)
+    
     setDT(dt_budget_2022)
+    
     
     
     dt_t_cdc = read.xlsx(file.path('inputs', 'support_trascodifiche.xlsx'), sheet = 'Trascodifica_CdC', detectDates = TRUE)
