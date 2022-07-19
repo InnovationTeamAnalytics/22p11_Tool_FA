@@ -15,54 +15,188 @@ dt_consbe = janitor::clean_names(dt_consbe)
 setDT(dt_consbe)
 
 ## Budget 2022
-dt_budget_2022 = readRDS(file.path('processed', 'tab_budget_2022.rds')) |>
+dt_budget_current = readRDS(file.path('processed', 'tab_budget_current.rds')) |>
     setnames("condizioni_commerciali_nominali_riclassificato", "condizioni_commerciali") |>
     setnames("ter_cod_adj", "soggetti_adj")
-dt_budget_2022 = janitor::clean_names(dt_budget_2022)
-setDT(dt_budget_2022)
+dt_budget_current = janitor::clean_names(dt_budget_current)
+setDT(dt_budget_current)
 
 ################################################################################
 
-dt_tot_1 <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+dt_consbe_fin_parziale <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
                         gennaio_2021_iva, febbraio_2021_iva, marzo_2021_iva, aprile_2021_iva, maggio_2021_iva, giugno_2021_iva,
                         luglio_2021_iva, agosto_2021_iva, settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva)]
 
-dt_tot_2 <- dt_budget_2022[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
                           gennaio_lordo_iva, febbraio_lordo_iva, marzo_lordo_iva, aprile_lordo_iva, maggio_lordo_iva, giugno_lordo_iva,
                           luglio_lordo_iva, agosto_lordo_iva, settembre_lordo_iva, ottobre_lordo_iva, novembre_lordo_iva, dicembre_lordo_iva)]
 
-dt_tot <- rbind(dt_tot_1, dt_tot_2, fill = T)
+dt_input_budget_fin <- rbind(dt_consbe_fin_parziale, dt_budget_current_parziale, fill = T)
+
 
 # 0 mesi
-dt_tot <- dt_tot[condizioni_commerciali == "Entro mese in corso", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
-                                                                    "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
+# dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
 
-#oppure
-dt_tot <- dt_tot[condizioni_commerciali == "Entro mese in corso", ':=' (gennaio_2022 = gennaio_lordo_iva,
-                         febbraio_2022 = febbraio_lordo_iva,
-                         marzo_2022 = marzo_lordo_iva,
-                         aprile_2022 = aprile_lordo_iva,
-                         maggio_2022 = maggio_lordo_iva,
-                         giugno_2022 = giugno_lordo_iva,
-                         luglio_2022 = luglio_lordo_iva,
-                         agosto_2022 = agosto_lordo_iva,
-                         settembre_2022 = settembre_lordo_iva,
-                         ottobre_2022 = ottobre_lordo_iva,
-                         novembre_2022 = novembre_lordo_iva,
-                         dicembre_2022 = dicembre_lordo_iva)]
+#
+dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", ':=' (gennaio = gennaio_lordo_iva,
+                                                                        febbraio = febbraio_lordo_iva,
+                                                                        marzo = marzo_lordo_iva,
+                                                                        aprile = aprile_lordo_iva,
+                                                                        maggio = maggio_lordo_iva,
+                                                                        giugno = giugno_lordo_iva,
+                                                                        luglio = luglio_lordo_iva,
+                                                                        agosto = agosto_lordo_iva,
+                                                                        settembre = settembre_lordo_iva,
+                                                                        ottobre = ottobre_lordo_iva,
+                                                                        novembre = novembre_lordo_iva,
+                                                                        dicembre = dicembre_lordo_iva)]
 
 # -1 mese
-dt_tot <- dt_tot[condizioni_commerciali == "Mese successivo", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
-                                                                    "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(dicembre_2021_iva, gennaio_lordo_iva:novembre_lordo_iva)]
+# dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Mese successivo", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(dicembre_2021_iva, gennaio_lordo_iva:novembre_lordo_iva)]
 
+dt_input_budget_fin[condizioni_commerciali == "Mese successivo", ':=' (gennaio = dicembre_2021_iva,
+                                                                    febbraio = gennaio_lordo_iva,
+                                                                    marzo = febbraio_lordo_iva,
+                                                                    aprile = marzo_lordo_iva,
+                                                                    maggio = aprile_lordo_iva,
+                                                                    giugno = maggio_lordo_iva,
+                                                                    luglio = giugno_lordo_iva,
+                                                                    agosto = luglio_lordo_iva,
+                                                                    settembre = agosto_lordo_iva,
+                                                                    ottobre = settembre_lordo_iva,
+                                                                    novembre = ottobre_lordo_iva,
+                                                                    dicembre = novembre_lordo_iva)]
 # -2 mesi
-dt_tot <- dt_tot[condizioni_commerciali == "Dopo 2 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
-                                                                "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:ottobre_lordo_iva)]
+#dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Dopo 2 mesi", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:ottobre_lordo_iva)]
+
+
+dt_input_budget_fin[condizioni_commerciali == "Dopo 2 mesi", ':=' (gennaio = novembre_2021_iva,
+                                                                    febbraio = dicembre_2021_iva,
+                                                                    marzo = gennaio_lordo_iva,
+                                                                    aprile = febbraio_lordo_iva,
+                                                                    maggio = marzo_lordo_iva,
+                                                                    giugno = aprile_lordo_iva,
+                                                                    luglio = maggio_lordo_iva,
+                                                                    agosto = giugno_lordo_iva,
+                                                                    settembre = luglio_lordo_iva,
+                                                                    ottobre = agosto_lordo_iva,
+                                                                    novembre = settembre_lordo_iva,
+                                                                    dicembre = ottobre_lordo_iva)]
 
 # -3 mesi
-dt_tot <- dt_tot[condizioni_commerciali == "Dopo 3 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
-                                                            "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:settebre_lordo_iva)]
+#dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Dopo 3 mesi", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:settebre_lordo_iva)]
+
+dt_input_budget_fin[condizioni_commerciali == "Dopo 3 mesi", ':=' (gennaio = ottobre_2021_iva,
+                                                                    febbraio = novembre_2021_iva,
+                                                                    marzo = dicembre_2021_iva,
+                                                                    aprile = gennaio_lordo_iva,
+                                                                    maggio = febbraio_lordo_iva,
+                                                                    giugno = marzo_lordo_iva,
+                                                                    luglio = aprile_lordo_iva,
+                                                                    agosto = maggio_lordo_iva,
+                                                                    settembre = giugno_lordo_iva,
+                                                                    ottobre = luglio_lordo_iva,
+                                                                    novembre = agosto_lordo_iva,
+                                                                    dicembre = settembre_lordo_iva)]
 
 # -4 mesi
-dt_tot <- dt_tot[condizioni_commerciali == "Dopo 2 mesi", c("gennaio_2022","febbraio_2022","marzo_2022","aprile_2022","maggio_2022","giugno_2022",
-                                                            "luglio_2022","agosto_2022","settembre_2022","ottobre_2022","novembre_2022","dicembre_2022") := list(settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:agosto_lordo_iva)]
+#dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Dopo 4 mesi", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva, gennaio_lordo_iva:agosto_lordo_iva)]
+
+
+dt_input_budget_fin[condizioni_commerciali == "Dopo 4 mesi", ':=' (gennaio = ottobre_2021_iva,
+                                                                febbraio = ottobre_2021_iva,
+                                                                marzo = novembre_2021_iva,
+                                                                aprile = dicembre_2021_iva,
+                                                                maggio = gennaio_lordo_iva,
+                                                                giugno = febbraio_lordo_iva,
+                                                                luglio = marzo_lordo_iva,
+                                                                agosto = aprile_lordo_iva,
+                                                                settembre = maggio_lordo_iva,
+                                                                ottobre = giugno_lordo_iva,
+                                                                novembre = luglio_lordo_iva,
+                                                                dicembre = agosto_lordo_iva)]
+
+
+
+# ENTRATE----
+kc_months = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+
+kc_months_id = c('soggetti_adj', kc_months)
+
+
+entrate_line = function(line, data = dt_budget_current) {
+    
+    dt_budget_current_entrate = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_months_id]
+    if(nrow(dt_budget_current_entrate) == 0) {
+        
+        dt_budget_current_entrate = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_months_id)
+        
+    } else {
+        
+        dt_budget_current_entrate = melt(dt_budget_current_entrate, id.vars = 'soggetti_adj', measure.vars = kc_months, variable.name = 'date', 'entrate')
+        dt_budget_current_entrate = dt_budget_current_entrate[, .(budget_current = sum(entrate, na.rm = TRUE)), by = c('soggetti_adj', 'date')]
+        dt_budget_current_entrate = dcast(dt_budget_current_entrate, soggetti_adj ~ date, value.var = 'budget_current')
+        
+    }
+    
+    dt_budget_current_entrate[, id := line]
+    
+    return(dt_budget_current_entrate)
+    
+}
+
+
+entrate_list = lapply(unique(dt_budget_current$cdc_raggruppamenti_adj), entrate_line)
+names(entrate_list) = unique(dt_budget_current$cdc_raggruppamenti_adj)
+dt_entrate_list <- rbindlist(entrate_list)
+
+dt_entrate_list_tot <- dt_entrate_list[, (lapply(.SD, sum)), .SDcols = kc_months, by = id]
+
+rbind(dt_entrate_list, dt_entrate_list_tot, fill = T)
+
+## Export ----
+write.xlsx(dt_entrate_list, file = file.path('processed', 'entrate_tab_budget_eco.xlsx'))
+
+
+
+
+# ALTRE ENTRATE----
+
+altre_entrate = function(data = dt_budget_current) {
+    
+    dt_budget_current_altre_entrate = data[cdc_raggruppamenti_adj == "Ricavi / Costi indiretti" 
+                                       
+                                       & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj == 'Altri ricavi' , ..kc_months_id]
+    
+    if(nrow(dt_budget_current_altre_entrate) == 0) {
+        
+        dt_budget_current_altre_entrate = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_months_id)
+        
+    } else {
+        
+        dt_budget_current_altre_entrate = melt(dt_budget_current_altre_entrate, id.vars = 'soggetti_adj', measure.vars = kc_months, variable.name = 'date', 'altre_entrate')
+        dt_budget_current_altre_entrate = dt_budget_current_altre_entrate[, .(budget_current = sum(altre_entrate, na.rm = TRUE)), by = c('soggetti_adj', 'date')]
+        
+        dt_budget_current_altre_entrate = dcast(dt_budget_current_altre_entrate, soggetti_adj ~ date, value.var = 'budget_current')
+        
+    }
+    
+    
+    return(dt_budget_current_altre_entrate)
+    
+}
+
+
+dt_altre_entrate <- altre_entrate()
+
+dt_altre_entrate_tot <- dt_altre_entrate[, (lapply(.SD, sum)), .SDcols = kc_months]
+dt_altre_entrate_tot[, id := "altre_entrate"]
+dt_altre_entrate_tot <- setcolorder(dt_altre_entrate_tot, c("id", "gennaio" , "febbraio", "marzo" , "aprile",
+                                                          
+                                                          "maggio", "giugno",  "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre"))
+
+
+dt_entrate_totali_full <- rbind(dt_entrate_list_tot, dt_altre_entrate_tot, fill = T)
+
+
+dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (lapply(.SD, function(x){x/sum(x)})), .SDcols = kc_months, by = id]
