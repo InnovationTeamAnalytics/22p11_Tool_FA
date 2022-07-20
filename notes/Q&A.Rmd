@@ -19,10 +19,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Coop alleanza (1667)
 
-- asimmetria tra mesi in input e mesi riportati in budget finanziario. questo è un problema per la coerenza dei risultati. 
+- asimmetria tra mesi in input e gap mesi riportati in budget finanziario. questo è un problema per la coerenza dei risultati. 
 
-
-
+- budget finanziario, perchè figure senza iva *1.22 piuttosto che i mesi ..._lordo_iva
 
 ### Meno importanti:
 
