@@ -44,11 +44,15 @@ setDT(dt_t_condcom)
 setDT(dt_t_condcom_t)
 
 
+dt_t_cliente_tipo[, soggetto := str_pad(soggetto, width = 10, side = "left", pad = "0")]
+dt_t_cliente_expo[, soggetto := str_pad(soggetto, width = 10, side = "left", pad = "0")]
+dt_t_aliquote[, soggetto := str_pad(soggetto, width = 10, side = "left", pad = "0")]
+dt_t_condcom[, soggetto := str_pad(soggetto, width = 10, side = "left", pad = "0")]
 
 # DATA TRANSFORMATION =========================================================================================
 
 ### SOGGETTI ADJ
-dt_consbe[, soggetti_adj := fifelse(soggetti == '---', 0, as.numeric(soggetti))]
+dt_consbe[, soggetti_adj := fifelse(soggetti == '---', "Blank", soggetti)]
 
 ### CDC RAGGRUPPAMENTI ADJ
 dt_consbe = merge(dt_consbe, dt_t_cdc, by = 'cdc_raggruppamenti', all.x = TRUE) |>
@@ -93,7 +97,3 @@ dt_consbe[, (paste0(kc_iva, '_iva')) := lapply(.SD, function(x) { (1 + aliquota)
 # EXPORT ==================================================================================
 
 saveRDS(dt_consbe, file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
-
-
-
-
