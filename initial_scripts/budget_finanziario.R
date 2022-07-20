@@ -202,8 +202,13 @@ dt_altre_entrate_tot <- setcolorder(dt_altre_entrate_tot, c("id", "gennaio" , "f
 
 dt_entrate_totali_full <- rbind(dt_entrate_list_tot, dt_altre_entrate_tot, fill = T)
 
+dt_entrate_totali_percentuali_full <- copy(dt_entrate_totali_full)
+dt_entrate_totali_percentuali_full[, (kc_months) := lapply(.SD, function(x) {x / sum(x)}), .SDcols = kc_months]
 
-dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (kc_months) := lapply(.SD, function(x) {x / sum(x)}), .SDcols = kc_months]
+
+dt_tot_entrate_gestione_corrente <- dt_entrate_totali_full[, lapply(.SD, sum), .SDcols = kc_months]
+
+dt_tot_entrate_gestione_corrente[, id := "entrate"]
 
 #Export
 write.xlsx(dt_entrate_totali_full, file = file.path('processed', 'altre_entrate_tot_tab_budget_fin.xlsx'))
@@ -249,6 +254,22 @@ dt_uscite_list <- rbindlist(uscite_list, fill = T)[con_unlg_liv_2_adj %in% raggr
 
 dt_uscite_list_tot <- dt_uscite_list[, (lapply(.SD, sum)), .SDcols = kc_months, by = "con_unlg_liv_2_adj"]
 
+
+dt_tot_uscite_gestione_corrente <- dt_uscite_list_tot[, lapply(.SD, sum), .SDcols = kc_months]
+
+dt_tot_uscite_gestione_corrente[, id := "uscite"]
+
+# saldo gestione
+
+
+dt_saldo_gestione_corrente <- rbind(dt_tot_entrate_gestione_corrente, dt_tot_uscite_gestione_corrente)
+
+dt_diff_tot <- copy(dt_saldo_gestione_corrente)
+dt_diff_tot <- dt_diff_tot[, lapply(.SD, sum), .SDcols = kc_months]
+dt_diff_tot[, id := "saldo"]
+
+
+dt_saldo_tot <- rbind(dt_saldo_gestione_corrente, dt_diff_tot, fill = T)
 
 #Export
 write.xlsx(dt_uscite_list, file = file.path('processed', 'uscite_tab_budget_fin.xlsx'))
