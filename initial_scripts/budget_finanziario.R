@@ -160,8 +160,7 @@ dt_entrate_list_tot <- dt_entrate_list[, (lapply(.SD, sum)), .SDcols = kc_months
 rbind(dt_entrate_list, dt_entrate_list_tot, fill = T)
 
 ## Export ----
-write.xlsx(dt_entrate_list, file = file.path('processed', 'entrate_tab_budget_eco.xlsx'))
-
+write.xlsx(dt_entrate_list, file = file.path('processed', 'entrate_tab_budget_fin.xlsx'))
 
 
 
@@ -206,7 +205,9 @@ dt_entrate_totali_full <- rbind(dt_entrate_list_tot, dt_altre_entrate_tot, fill 
 
 dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (kc_months) := lapply(.SD, function(x) {x / sum(x)}), .SDcols = kc_months]
 
-
+#Export
+write.xlsx(dt_entrate_totali_full, file = file.path('processed', 'altre_entrate_tot_tab_budget_fin.xlsx'))
+write.xlsx(dt_entrate_totali_percentuali_full, file = file.path('processed', 'altre_entrate_perc_tab_budget_fin.xlsx'))
 
 
 # USCITE----
@@ -249,4 +250,7 @@ dt_uscite_list <- rbindlist(uscite_list, fill = T)[con_unlg_liv_2_adj %in% raggr
 dt_uscite_list_tot <- dt_uscite_list[, (lapply(.SD, sum)), .SDcols = kc_months, by = "con_unlg_liv_2_adj"]
 
 
+#Export
+write.xlsx(dt_uscite_list, file = file.path('processed', 'uscite_tab_budget_fin.xlsx'))
+write.xlsx(dt_uscite_list_tot, file = file.path('processed', 'uscite_tot_tab_budget_fin.xlsx'))
 
