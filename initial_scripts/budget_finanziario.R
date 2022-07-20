@@ -7,15 +7,13 @@ library(innteamUtils)
 library(janitor)
 library(stringr)
 
-options(scipen = 999, digits = 3)
+options(scipen = 999)
 
 # UPLOAD DATA----
 ## Consuntivo
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
 dt_consbe = janitor::clean_names(dt_consbe)
 setDT(dt_consbe)
-
-dt_consbe[, soggetti_adj := str_pad(soggetti_adj, width = 10, side = "left", pad = "0")]
 
 ## Budget 2022
 dt_budget_current = readRDS(file.path('processed', 'tab_budget_current.rds')) |>
@@ -24,17 +22,22 @@ dt_budget_current = readRDS(file.path('processed', 'tab_budget_current.rds')) |>
 dt_budget_current = janitor::clean_names(dt_budget_current)
 setDT(dt_budget_current)
 
+## Supporti
+dt_t_ipotesi = read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Ipotesi', detectDates = TRUE)
+
 ################################################################################
 
-dt_consbe_fin_parziale <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+dt_consbe_fin_parziale <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj,
                         gennaio_2021_iva, febbraio_2021_iva, marzo_2021_iva, aprile_2021_iva, maggio_2021_iva, giugno_2021_iva,
                         luglio_2021_iva, agosto_2021_iva, settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva)]
 
-dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2_adj,
+dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj,
                           gennaio_lordo_iva, febbraio_lordo_iva, marzo_lordo_iva, aprile_lordo_iva, maggio_lordo_iva, giugno_lordo_iva,
                           luglio_lordo_iva, agosto_lordo_iva, settembre_lordo_iva, ottobre_lordo_iva, novembre_lordo_iva, dicembre_lordo_iva)]
 
 dt_input_budget_fin <- rbind(dt_consbe_fin_parziale, dt_budget_current_parziale, fill = T)
+
+#dt_input_budget_fin[soggetti_adj = "0000000302", condizioni_commerciali := "Dopo 2 mesi"]
 
 # 0 mesi
 # dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
@@ -202,4 +205,48 @@ dt_entrate_totali_full <- rbind(dt_entrate_list_tot, dt_altre_entrate_tot, fill 
 
 
 dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (kc_months) := lapply(.SD, function(x) {x / sum(x)}), .SDcols = kc_months]
+
+
+
+
+# USCITE----
+
+kc_months_id_adj = c(kc_months_id, "con_unlg_liv_2_adj")
+
+kc_months_tipo <- c(kc_months, "con_unlg_liv_2_adj")
+
+
+uscite_tipo = function(tipo, data = dt_input_budget_fin) {
+    
+    dt_budget_current_uscite = data[con_unlg_liv_2 == tipo, ..kc_months_id_adj]
+    if(nrow(dt_budget_current_uscite) == 0) {
+        
+        dt_budget_current_uscite = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_months_id_adj)
+        
+    } else {
+        
+        dt_budget_current_uscite = melt(dt_budget_current_uscite, id.vars = c('soggetti_adj',"con_unlg_liv_2_adj"), measure.vars = kc_months, variable.name = 'date', 'uscite')
+        dt_budget_current_uscite = dt_budget_current_uscite[, .(budget_current = sum(uscite, na.rm = TRUE)), by = c('soggetti_adj', 'con_unlg_liv_2_adj', 'date')]
+
+        dt_budget_current_uscite = dcast(dt_budget_current_uscite, ... ~ date, value.var = 'budget_current')
+        
+    }
+    
+    dt_budget_current_uscite[, ':=' (id = tipo)]
+    
+    return(dt_budget_current_uscite)
+    
+}
+
+
+raggr_uscite = unique(dt_input_budget_fin$con_unlg_liv_2)
+
+uscite_list = lapply(raggr_uscite, uscite_tipo)
+
+raggr_uscite_adj = str_subset(unique(dt_input_budget_fin$con_unlg_liv_2_adj), '\\(', negate = F)
+dt_uscite_list <- rbindlist(uscite_list, fill = T)[con_unlg_liv_2_adj %in% raggr_uscite_adj]
+
+dt_uscite_list_tot <- dt_uscite_list[, (lapply(.SD, sum)), .SDcols = kc_months, by = "con_unlg_liv_2_adj"]
+
+
 
