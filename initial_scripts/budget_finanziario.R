@@ -5,6 +5,7 @@ library(data.table)
 library(openxlsx)
 library(innteamUtils)
 library(janitor)
+library(stringr)
 
 options(scipen = 999, digits = 3)
 
@@ -13,6 +14,8 @@ options(scipen = 999, digits = 3)
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
 dt_consbe = janitor::clean_names(dt_consbe)
 setDT(dt_consbe)
+
+dt_consbe[, soggetti_adj := str_pad(soggetti_adj, width = 10, side = "left", pad = "0")]
 
 ## Budget 2022
 dt_budget_current = readRDS(file.path('processed', 'tab_budget_current.rds')) |>
@@ -32,7 +35,6 @@ dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_com
                           luglio_lordo_iva, agosto_lordo_iva, settembre_lordo_iva, ottobre_lordo_iva, novembre_lordo_iva, dicembre_lordo_iva)]
 
 dt_input_budget_fin <- rbind(dt_consbe_fin_parziale, dt_budget_current_parziale, fill = T)
-
 
 # 0 mesi
 # dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
@@ -124,9 +126,9 @@ kc_months = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "lug
 kc_months_id = c('soggetti_adj', kc_months)
 
 
-entrate_line = function(line, data = dt_budget_current) {
+entrate_line = function(line, data = dt_input_budget_fin) {
     
-    dt_budget_current_entrate = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi' & con_unlg_liv_2_adj != 'Altri ricavi' , ..kc_months_id]
+    dt_budget_current_entrate = data[cdc_raggruppamenti_adj == line & tipo_voce == 'Ricavi', ..kc_months_id]
     if(nrow(dt_budget_current_entrate) == 0) {
         
         dt_budget_current_entrate = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_months_id)
@@ -162,7 +164,7 @@ write.xlsx(dt_entrate_list, file = file.path('processed', 'entrate_tab_budget_ec
 
 # ALTRE ENTRATE----
 
-altre_entrate = function(data = dt_budget_current) {
+altre_entrate = function(data = dt_input_budget_fin) {
     
     dt_budget_current_altre_entrate = data[cdc_raggruppamenti_adj == "Ricavi / Costi indiretti" 
                                        
@@ -199,4 +201,5 @@ dt_altre_entrate_tot <- setcolorder(dt_altre_entrate_tot, c("id", "gennaio" , "f
 dt_entrate_totali_full <- rbind(dt_entrate_list_tot, dt_altre_entrate_tot, fill = T)
 
 
-dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (lapply(.SD, function(x){x/sum(x)})), .SDcols = kc_months, by = id]
+dt_entrate_totali_percentuali_full <- dt_entrate_totali_full[, (kc_months) := lapply(.SD, function(x) {x / sum(x)}), .SDcols = kc_months]
+
