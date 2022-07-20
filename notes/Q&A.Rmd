@@ -15,6 +15,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - Può esserci, in generale, una contabilizzazione >12 mesi?
 
+- Budg finanziario, entrate correnti, Trasporto, per automatizzare il codice vanno divisi Centrale adriatica soc coop (1408) da 
+
+Coop alleanza (1667)
+
+- asimmetria tra mesi in input e mesi riportati in budget finanziario. questo è un problema per la coerenza dei risultati. 
+
+
+
 
 ### Meno importanti:
 

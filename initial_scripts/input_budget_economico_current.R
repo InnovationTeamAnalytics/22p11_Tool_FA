@@ -51,9 +51,9 @@ setDT(dt_t_condcom_t)
 
 ### CODICI 
 dt_budget_current[, id_contabile := paste(con_codice, con_descrizione, sep = " - ") ]
-dt_budget_current[, ter_cod_adj := fifelse(ter_cod == "", 'Blank', ter_cod)]
-dt_budget_current[, ter_cod_adj := fifelse(ter_cod == "---", 'Blank', ter_cod)]
-dt_budget_current[, ter_cod_adj := fifelse(is.na(ter_cod_adj), 'Blank', ter_cod_adj)]
+dt_budget_current[, ter_cod_adj := fifelse(ter_cod == "", "Blank", ter_cod)]
+dt_budget_current[, ter_cod_adj := fifelse(ter_cod == "---", "Blank", ter_cod)]
+dt_budget_current[, ter_cod_adj := fifelse(is.na(ter_cod_adj), "Blank", ter_cod_adj)]
 dt_budget_current = merge(x = dt_budget_current, y = dt_t_cdc, by = "cdc_raggruppamenti", all.x = T)
 setnames(x = dt_budget_current, old = "riclassifica", new = "cdc_raggruppamenti_adj")
 
