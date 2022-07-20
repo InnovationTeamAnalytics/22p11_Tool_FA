@@ -102,18 +102,27 @@ dt_budget_current[, aliquota := fcase(esportatore == 'SI', 0,
                                       default = 0.22)]
 
 
+
+
+### Long Format -------------------------------------
+
+kc_months = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+dt_budget_current_long = melt(dt_budget_current, 
+                              id.vars = names(dt_budget_current)[!names(dt_budget_current) %in% kc_months],
+                              measure.vars = kc_months,
+                              variable.name = 'months',
+                              value.name = 'valori')
+
+
 ### DATA + IVA
-kc_iva = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
-
-dt_budget_current[, (paste0(kc_iva, '_lordo_iva')) := lapply(.SD, function(x) { (1 + aliquota) * x }), .SDcols = kc_iva]
-
+dt_budget_current_long[, valori_lordoiva := valori * (1 + aliquota)]
 
 
 
 # EXPORT ==================================================================================
 
 saveRDS(dt_budget_current, file.path('processed', 'tab_budget_current.rds'))
-
+saveRDS(dt_budget_current_long, file.path('processed', 'tab_budget_current_long.rds'))
 
 
 
