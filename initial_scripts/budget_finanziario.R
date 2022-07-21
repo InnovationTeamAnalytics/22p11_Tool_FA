@@ -23,7 +23,13 @@ dt_budget_current = janitor::clean_names(dt_budget_current)
 setDT(dt_budget_current)
 
 ## Supporti
+
 dt_t_ipotesi = read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Ipotesi', detectDates = TRUE)
+dt_assicurazioni <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Dettaglio_assicurazioni', detectDates = TRUE)
+setDT(dt_t_ipotesi)
+setDT(dt_assicurazioni)
+
+
 
 ################################################################################
 
@@ -274,4 +280,74 @@ dt_saldo_tot <- rbind(dt_saldo_gestione_corrente, dt_diff_tot, fill = T)
 #Export
 write.xlsx(dt_uscite_list, file = file.path('processed', 'uscite_tab_budget_fin.xlsx'))
 write.xlsx(dt_uscite_list_tot, file = file.path('processed', 'uscite_tot_tab_budget_fin.xlsx'))
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Trasporto Good Truck --------------------------------------
+
+dt_input_budget_fin
+dt_t_ipotesi
+dt_assicurazioni
+
+
+dt_t_ipotesi_goodtruck <- dt_t_ipotesi[id == "Uscite Good Truck"]
+dt_trasporto_goodtruck <- dt_input_budget_fin[soggetti_adj == "0000000302" & con_unlg_liv_2_adj == "(Trasporto)"]
+
+dt_trasporto_goodtruck[, ':=' (
+    gennaio = ottobre_2021_iva,
+    febbraio = ottobre_2021_iva,
+    marzo = novembre_2021_iva,
+    aprile = dicembre_2021_iva,
+    maggio = gennaio_lordo_iva,
+    giugno = febbraio_lordo_iva,
+    luglio = marzo_lordo_iva,
+    agosto = aprile_lordo_iva,
+    settembre = maggio_lordo_iva,
+    ottobre = giugno_lordo_iva,
+    novembre = luglio_lordo_iva,
+    dicembre = agosto_lordo_iva)]
+
+
+dt_trasporto_goodtruck[, ..kc_months]
+
+
+dt_trasporto_goodtruck_tot <- dt_trasporto_goodtruck[, (lapply(.SD, function(x){sum(x,na.rm = T)})), .SDcols = kc_months]
+
+dt_trasporto_goodtruck_tot[, soggetti_adj := "0000000302"]
+dt_trasporto_goodtruck_tot[, condizioni_commerciali := "Dopo 4 mesi"]
+
+
+dt_t_ipotesi_goodtruck <- dcast(melt(dt_t_ipotesi_goodtruck, id.vars = "item"), value ~ item)
+dt_t_ipotesi_goodtruck <- dt_t_ipotesi_goodtruck[value != "Uscite Good Truck"]
+dt_t_ipotesi_goodtruck <- clean_names(dt_t_ipotesi_goodtruck)
+
+
+dt_t_ipotesi_goodtruck[, value := as.numeric(value)]
+dt_t_ipotesi_goodtruck[, quota_parte_ex_cta := as.numeric(quota_parte_ex_cta)]
+dt_t_ipotesi_goodtruck[, quota_parte_ex_ctl := as.numeric(quota_parte_ex_ctl)]
+dt_t_ipotesi_goodtruck[, quota_parte_good_truck := as.numeric(quota_parte_good_truck)]
+
+
+col_ipotesi <- c("value", "quota_parte_ex_cta", "quota_parte_ex_ctl", "quota_parte_good_truck")
+
+dt_t_ipotesi_goodtruck <- dt_t_ipotesi_goodtruck[, (lapply(.SD, function(x){sum(x,na.rm = T)})), .SDcols = col_ipotesi]
+
+dt_trasporto_goodtruck_excta <- dt_trasporto_goodtruck_tot[, (lapply(.SD, function(x){x*dt_t_ipotesi_goodtruck$quota_parte_ex_cta})), .SDcols = kc_months]
+dt_trasporto_goodtruck_exctl <- dt_trasporto_goodtruck_tot[, (lapply(.SD, function(x){x*dt_t_ipotesi_goodtruck$quota_parte_ex_ctl})), .SDcols = kc_months]
+dt_trasporto_goodtruck_quota_goodtrack <- dt_trasporto_goodtruck_tot[, (lapply(.SD, function(x){x*dt_t_ipotesi_goodtruck$quota_parte_good_truck})), .SDcols = kc_months]
+
+
+dt_trasporto_goodtruck_tot_full <- rbind(dt_trasporto_goodtruck_tot,dt_trasporto_goodtruck_excta, dt_trasporto_goodtruck_exctl, dt_trasporto_goodtruck_quota_goodtrack, fill = TRUE )
 
