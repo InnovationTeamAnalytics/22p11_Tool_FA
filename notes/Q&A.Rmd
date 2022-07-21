@@ -23,6 +23,9 @@ Coop alleanza (1667)
 
 - budget finanziario, perchè figure senza iva *1.22 piuttosto che i mesi ..._lordo_iva
 
+- differenza tra "altri costi di funzionamento" e "altri costi diretti di funzionamento"
+
+
 ### Meno importanti:
 
 - Qual è il threshold per render certe aziende Top visibili o in Altri?
