@@ -298,8 +298,8 @@ personale_list = lapply(unique(dt_budget_current$tipo_costo_personale, na.rm = T
 names(personale_list) = unique(dt_budget_current$tipo_costo_personale, na.rm = T)
 dt_personale_list <- rbindlist(personale_list)
 
-### contributi irpef
-dt_irpef_line <- dt_personale_list[, lapply(.SD, function(x) {x * dt_t_ipotesi[item %like% "IRPEF", value]}), .SDcols = kc_months, by = "soggetti_adj"][, id := "CONTRIBUTI IRPEF"]
+### Contributi irpef
+dt_irpef_line <- dt_personale_list[id != "CONTRIBUTI INPS E INAIL", lapply(.SD, function(x) {x * dt_t_ipotesi[item %like% "IRPEF", value]}), .SDcols = kc_months, by = "soggetti_adj"][, id := "CONTRIBUTI IRPEF"]
 
 dt_personale_part <- rbind(dt_personale_list, dt_irpef_line)
 
@@ -311,8 +311,9 @@ dt_plafond_line <- data.table(id = "Plafond",
 
 dt_plafond_line <- rbind(dt_personale_part_tot, dt_plafond_line, fill = T)
 
-dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (febbraio = gennaio,
-                                                              marzo = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", marzo] + 
+dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (febbraio = gennaio)]
+
+dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (marzo = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", marzo] + 
                                                                                  dt_plafond_line[id == "CONTRIBUTI IRPEF", marzo] +
                                                                                  dt_plafond_line[id == "Plafond", febbraio] < 0,
                                                                              0,
@@ -320,7 +321,7 @@ dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (febbraio = gennaio
                                                                                  dt_plafond_line[id == "CONTRIBUTI IRPEF", marzo] +
                                                                                  dt_plafond_line[id == "Plafond", febbraio]))]
 
-t_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (aprile = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", aprile] + 
+dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (aprile = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", aprile] + 
                                                                                  dt_plafond_line[id == "CONTRIBUTI IRPEF", aprile] +
                                                                                  dt_plafond_line[id == "Plafond", marzo] < 0,
                                                                              0,
@@ -467,6 +468,25 @@ dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (dicembre = ifelse(
 #                                                                                 dt_plafond_line[id == "Plafond", novembre]))]
 
 dt_plafond_line_tot <- dt_plafond_line_tot[, category := ifelse(id %like% "CONTRIBUTI" | id %like% "Plafond", "CONTRIBUTI", "COSTO STANDARD DEL PERSONALE")]
+
+dt_plafond_single <- dt_plafond_line_tot[id == "Plafond",]
+
+# Consulenze----
+# Eliminare Cerved da uscite_list perchè i calcoli per Cerved sono diversi
+
+dt_uscite_list_new = dt_uscite_list[soggetti_adj == "0000002035", ':=' (gennaio = 0,
+                                                                        febbraio = 0,
+                                                                        marzo = 0,
+                                                                        aprile = 0,
+                                                                        maggio = 0,
+                                                                        giugno = 0,
+                                                                        luglio = 0,
+                                                                        agosto = 0,
+                                                                        settembre = 0,
+                                                                        ottobre = 0,
+                                                                        novembre = 0,
+                                                                        dicembre = 0)]
+
 
 # SALDO GESTIONE----
 
