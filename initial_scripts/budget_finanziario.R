@@ -9,6 +9,9 @@ library(stringr)
 
 options(scipen = 999)
 
+
+
+
 # UPLOAD DATA----
 ## Consuntivo
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
