@@ -11,7 +11,6 @@ options(scipen = 999)
 
 
 
-
 # UPLOAD DATA----
 ## Consuntivo
 dt_consbe = readRDS(file.path('processed', 'tab_BudgetEconomico_consuntivo.rds'))
@@ -27,14 +26,17 @@ setDT(dt_budget_current)
 
 ## Supporti
 dt_t_ipotesi = read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Ipotesi', detectDates = TRUE)
+dt_t_ipotesi = janitor::clean_names(dt_t_ipotesi)
+setDT(dt_t_ipotesi)
+
 
 ################################################################################
 
-dt_consbe_fin_parziale <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj,
+dt_consbe_fin_parziale <- dt_consbe[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj, tipo_costo_personale,
                         gennaio_2021_iva, febbraio_2021_iva, marzo_2021_iva, aprile_2021_iva, maggio_2021_iva, giugno_2021_iva,
                         luglio_2021_iva, agosto_2021_iva, settembre_2021_iva, ottobre_2021_iva, novembre_2021_iva, dicembre_2021_iva)]
 
-dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj,
+dt_budget_current_parziale <- dt_budget_current[, .(soggetti_adj, condizioni_commerciali, cdc_raggruppamenti_adj, tipo_voce, con_unlg_liv_2, con_unlg_liv_2_adj, tipo_costo_personale,
                           gennaio_lordo_iva, febbraio_lordo_iva, marzo_lordo_iva, aprile_lordo_iva, maggio_lordo_iva, giugno_lordo_iva,
                           luglio_lordo_iva, agosto_lordo_iva, settembre_lordo_iva, ottobre_lordo_iva, novembre_lordo_iva, dicembre_lordo_iva)]
 
@@ -45,7 +47,6 @@ dt_input_budget_fin <- rbind(dt_consbe_fin_parziale, dt_budget_current_parziale,
 # 0 mesi
 # dt_input_budget_fin <- dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", c("gennaio","febbraio","marzo","aprile","maggio","giugno","luglio","agosto","settembre","ottobre","novembre","dicembre") := list(gennaio_lordo_iva:dicembre_lordo_iva)]
 
-#
 dt_input_budget_fin[condizioni_commerciali == "Entro mese in corso", ':=' (gennaio = gennaio_lordo_iva,
                                                                         febbraio = febbraio_lordo_iva,
                                                                         marzo = marzo_lordo_iva,
@@ -168,7 +169,6 @@ write.xlsx(dt_entrate_list, file = file.path('processed', 'entrate_tab_budget_fi
 
 
 # ALTRE ENTRATE----
-
 altre_entrate = function(data = dt_input_budget_fin) {
     
     dt_budget_current_altre_entrate = data[cdc_raggruppamenti_adj == "Ricavi / Costi indiretti" 
@@ -216,6 +216,7 @@ dt_tot_entrate_gestione_corrente[, id := "entrate"]
 #Export
 write.xlsx(dt_entrate_totali_full, file = file.path('processed', 'altre_entrate_tot_tab_budget_fin.xlsx'))
 write.xlsx(dt_entrate_totali_percentuali_full, file = file.path('processed', 'altre_entrate_perc_tab_budget_fin.xlsx'))
+
 
 
 # USCITE----
@@ -267,8 +268,123 @@ dt_tot_uscite_gestione_corrente <- dt_uscite_list_tot[, lapply(.SD, sum), .SDcol
 
 dt_tot_uscite_gestione_corrente[, id := "uscite"]
 
-# saldo gestione
+#SPECIFICHE USCITE----
+## Personale----
 
+### Costo standard del personale e contributi inps e inail
+personale_line = function(tipo_costo, data = dt_input_budget_fin) {
+    
+    dt_budget_current_personale = data[con_unlg_liv_2_adj == "(Personale)" & tipo_costo_personale == tipo_costo, ..kc_months_id]
+    if(nrow(dt_budget_current_personale) == 0) {
+        
+        dt_budget_current_personale = setNames(data.table(matrix(nrow = 0, ncol = 13)), kc_months_id)
+        
+    } else {
+        
+        dt_budget_current_personale = melt(dt_budget_current_personale, id.vars = 'soggetti_adj', measure.vars = kc_months, variable.name = 'date', 'personale')
+        dt_budget_current_personale = dt_budget_current_personale[, .(budget_current = sum(personale, na.rm = TRUE)), by = c('soggetti_adj', 'date')]
+        dt_budget_current_personale = dcast(dt_budget_current_personale, soggetti_adj ~ date, value.var = 'budget_current')
+        
+    }
+    
+    dt_budget_current_personale[, id := tipo_costo]
+    
+    return(dt_budget_current_personale)
+    
+}
+
+
+personale_list = lapply(unique(dt_budget_current$tipo_costo_personale, na.rm = T), personale_line)
+names(personale_list) = unique(dt_budget_current$tipo_costo_personale, na.rm = T)
+dt_personale_list <- rbindlist(personale_list)
+
+### contributi irpef
+dt_irpef_line <- dt_personale_list[, lapply(.SD, function(x) {x * dt_t_ipotesi[item %like% "IRPEF", value]}), .SDcols = kc_months, by = "soggetti_adj"][, id := "CONTRIBUTI IRPEF"]
+
+dt_personale_part <- rbind(dt_personale_list, dt_irpef_line)
+
+dt_personale_part_tot <- dt_personale_part[, lapply(.SD, sum), .SDcols = kc_months, by = "id"]
+
+### Plafond
+dt_plafond_line <- data.table(id = "Plafond",
+                              gennaio = dt_t_ipotesi[item %like% "Plafond", value]) 
+
+dt_plafond_line <- rbind(dt_personale_part_tot, dt_plafond_line, fill = T)
+
+dt_plafond_line_tot <- dt_plafond_line[id == "Plafond", ':=' (febbraio = gennaio,
+                                       marzo = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", marzo] + 
+                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", marzo] +
+                                                              dt_plafond_line[id == "Plafond", febbraio] < 0,
+                                                          0,
+                                                          dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", marzo] + 
+                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", marzo] +
+                                                              dt_plafond_line[id == "Plafond", febbraio]),
+                                       aprile = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", aprile] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", aprile] +
+                                                                              dt_plafond_line[id == "Plafond", marzo] < 0,
+                                                       0,
+                                                       dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", aprile] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", aprile] +
+                                                                              dt_plafond_line[id == "Plafond", marzo]),
+                                       maggio = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", maggio] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", maggio] +
+                                                                              dt_plafond_line[id == "Plafond", aprile] < 0,
+                                                       0,
+                                                       dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", maggio] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", maggio] +
+                                                                              dt_plafond_line[id == "Plafond", aprile]),
+                                       giugno = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", giugno] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", giugno] +
+                                                                              dt_plafond_line[id == "Plafond", maggio] < 0,
+                                                       0,
+                                                       dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", giugno] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", giugno] +
+                                                                              dt_plafond_line[id == "Plafond", maggio]),
+                                       luglio = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", luglio] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", luglio] +
+                                                                              dt_plafond_line[id == "Plafond", giugno] < 0,
+                                                       0,
+                                                       dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", luglio] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", luglio] +
+                                                                              dt_plafond_line[id == "Plafond", giugno]),
+                                       agosto = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", agosto] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", agosto] +
+                                                                              dt_plafond_line[id == "Plafond", luglio] < 0,
+                                                       0,
+                                                       dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", agosto] + 
+                                                                              dt_plafond_line[id == "CONTRIBUTI IRPEF", agosto] +
+                                                                              dt_plafond_line[id == "Plafond", luglio]),
+                                       settembre = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", settembre] + 
+                                                                                 dt_plafond_line[id == "CONTRIBUTI IRPEF", settembre] +
+                                                                                 dt_plafond_line[id == "Plafond", agosto] < 0,
+                                                          0,
+                                                          dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", settembre] + 
+                                                                                 dt_plafond_line[id == "CONTRIBUTI IRPEF", settembre] +
+                                                                                 dt_plafond_line[id == "Plafond", agosto]),
+                                       ottobre = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", ottobre] + 
+                                                                               dt_plafond_line[id == "CONTRIBUTI IRPEF", ottobre] +
+                                                                               dt_plafond_line[id == "Plafond", settembre] < 0,
+                                                        0,
+                                                        dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", ottobre] + 
+                                                                               dt_plafond_line[id == "CONTRIBUTI IRPEF", ottobre] +
+                                                                               dt_plafond_line[id == "Plafond", settembre]),
+                                       novembre = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", novembre] + 
+                                                                                dt_plafond_line[id == "CONTRIBUTI IRPEF", novembre] +
+                                                                                dt_plafond_line[id == "Plafond", ottobre] < 0,
+                                                         0,
+                                                         dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", novembre] + 
+                                                                                dt_plafond_line[id == "CONTRIBUTI IRPEF", novembre] +
+                                                                                dt_plafond_line[id == "Plafond", ottobre]),
+                                       dicembre = ifelse(dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", dicembre] + 
+                                                                                dt_plafond_line[id == "CONTRIBUTI IRPEF", dicembre] +
+                                                                                dt_plafond_line[id == "Plafond", novembre] < 0,
+                                                         0,
+                                                         dt_plafond_line[id == "CONTRIBUTI INPS E INAIL", dicembre] + 
+                                                                                dt_plafond_line[id == "CONTRIBUTI IRPEF", dicembre] +
+                                                                                dt_plafond_line[id == "Plafond", novembre]))]
+
+
+# SALDO GESTIONE----
 
 dt_saldo_gestione_corrente <- rbind(dt_tot_entrate_gestione_corrente, dt_tot_uscite_gestione_corrente)
 
