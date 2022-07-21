@@ -15,16 +15,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 - Può esserci, in generale, una contabilizzazione >12 mesi?
 
-- Budg finanziario, entrate correnti, Trasporto, per automatizzare il codice vanno divisi Centrale adriatica soc coop (1408) da 
-
-Coop alleanza (1667)
-
-- asimmetria tra mesi in input e gap mesi riportati in budget finanziario. questo è un problema per la coerenza dei risultati. 
-
-- budget finanziario, perchè figure senza iva *1.22 piuttosto che i mesi ..._lordo_iva
-
-- differenza tra "altri costi di funzionamento" e "altri costi diretti di funzionamento"
-
 
 ### Meno importanti:
 
@@ -45,8 +35,6 @@ Fatture a gennaio incasso a marzo, valore di gennaio a tot mesi successivi. Quan
 - Contabilizzazione è sempre <12 mesi
 
 
-
-
 - Visibili sono i top fatturato
 
 - (Good Truck no problem)
@@ -57,6 +45,21 @@ Fatture a gennaio incasso a marzo, valore di gennaio a tot mesi successivi. Quan
 
 - Attenzione valori condizioni commerciali, un punto di differenza: BON. BANC. VISTA. FATT. e BON. BANC. VISTA. FATT dopo risulta che condizioni commerciali adjusted hanno valori missing
 
-#### Answer
 
-- ...
+
+
+
+# NUOVE----
+
+
+- Budg finanziario, entrate correnti, Trasporto, per automatizzare il codice vanno divisi Centrale adriatica soc coop (1408) da 
+
+Coop alleanza (1667)
+
+- asimmetria tra mesi in input e gap mesi riportati in budget finanziario. questo è un problema per la coerenza dei risultati. 
+
+- budget finanziario, perchè figure senza iva *1.22 piuttosto che i mesi ..._lordo_iva
+
+- differenza tra "altri costi di funzionamento" e "altri costi diretti di funzionamento"
+
+- Che cos'è totale importo di default? perchè c'entra con costi pubblicitari? Perchè solo a dicembre?

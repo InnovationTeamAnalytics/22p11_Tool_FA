@@ -216,6 +216,11 @@ write.xlsx(dt_entrate_totali_percentuali_full, file = file.path('processed', 'al
 
 
 # USCITE----
+# Attenzione: da fare a parte (specifiche) ci sono:
+## Trasporto E
+## Personale S
+## Assicurazioni E
+## consulenze S
 
 kc_months_id_adj = c(kc_months_id, "con_unlg_liv_2_adj")
 
