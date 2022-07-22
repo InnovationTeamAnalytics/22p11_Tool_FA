@@ -686,4 +686,97 @@ dt_mutui_interess_grouped <- dt_mutui_interess_list[, lapply(.SD, unique), .SDco
 
 dt_mutui_tot <- rbind(dt_mutui_erogazione_grouped, dt_mutui_quota_rata_grouped, dt_mutui_interess_grouped)
 
+# Parfinco ---------------------
 
+
+dt_parfinco <- dt_t_ipotesi[id == "Parfinco"]
+
+debito_parfinco <- dt_parfinco[item == "Debito residuo", value] 
+interesse_parfinco <- dt_parfinco[item == "Tasso di interesse annuo", value]
+
+operazione <- debito_parfinco*interesse_parfinco/12
+
+dt_parfinco_line <- data.table(  rep( NA, ncol(dt_mutui_tot)))
+
+dt_parfinco_line <- transpose(dt_parfinco_line)
+
+setnames(dt_parfinco_line, names(dt_mutui_tot))
+
+
+dt_mutui_parfinco_tot <- rbind(dt_mutui_tot, dt_parfinco_line)
+
+dt_mutui_parfinco_tot[is.na(banca) , banca := "Parfinco" ]
+
+dt_mutui_parfinco_tot[banca == "Parfinco" , id := "Interessi su mutuo" ]
+
+# 
+# 
+# f_parf <- function(debito, interesse ) {list(debito*interesse/12)}
+# dt_mutui_parfinco_tot[banca == "Parfinco"][, (kc_months) := operazione]
+
+# 
+
+dt_mutui_parfinco_tot [banca == "Parfinco", ':='
+                       
+                       (
+                           gennaio = operazione,
+                           febbraio = operazione,
+                           marzo = operazione,
+                           aprile = operazione,
+                           maggio = operazione,
+                           giugno = operazione,
+                           luglio = operazione,
+                           agosto = operazione,
+                           settembre = operazione,
+                           ottobre = operazione,
+                           novembre = operazione,
+                           dicembre = operazione)]
+
+
+
+# Gestione Straordinaria ----------------------------
+
+dt_immobiliare <- dt_t_ipotesi[id == "Incasso credito FMG"]
+
+dt_immobiliare <- dt_immobiliare[, item := as.Date(item, format = "%Y-%m-%d")][, mese_nome := format(item,"%B")]
+
+dt_immobiliare_line <- data.table(  rep( NA, ncol(dt_mutui_parfinco_tot)))
+
+dt_immobiliare_line <- transpose(dt_immobiliare_line)
+
+setnames(dt_immobiliare_line, names(dt_mutui_parfinco_tot))
+
+
+dt_immobiliare_line[, banca := "Gestione_straordinaria" ]
+
+dt_immobiliare_line[, id := as.character(id) ]
+
+dt_immobiliare_line[, id := "FMG_Immobiliare"]
+
+    
+assign_fmg <- function(i) {
+    mese_nome <- dt_immobiliare[, mese_nome]
+    value <- dt_immobiliare[, value]
+    dt_immobiliare_line[, mese_nome[i]] <- dt_immobiliare_line[, value[i]]
+        return(dt_immobiliare_line)
+    }
+    
+dt_immobiliare_fin <- lapply(c(seq(1:nrow(dt_immobiliare))), assign_fmg)
+
+dt_immobiliare_fin <- rbindlist(dt_immobiliare_fin)
+
+dt_immobiliare_fin_grouped <- dt_immobiliare_fin[, lapply(.SD, function(x){sum(x, na.rm = T)}), .SDcols = kc_months, by = .(banca, id)]
+
+
+imposte <- dt_t_ipotesi[item %like% "Imposte totali", value]
+dt_imposte_line <- data.table(  rep( NA, ncol(dt_immobiliare_fin)))
+
+dt_imposte_line <- transpose(dt_imposte_line)
+
+setnames(dt_imposte_line, names(dt_immobiliare_fin))
+
+dt_imposte_line[, id := "Imposte totali"]
+
+dt_straordinaria_grouped <- rbind(dt_immobiliare_fin_grouped, dt_imposte_line)
+
+dt_straordinaria_grouped[id == "Imposte totali", agosto := imposte]
