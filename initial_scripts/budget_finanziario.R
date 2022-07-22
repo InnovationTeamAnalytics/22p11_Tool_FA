@@ -369,35 +369,3 @@ assicurazioni_ottobre <- - dt_assicurazioni[periodicita == "TRIMESTRALE"]$import
 
 
 
-# GESTIONE FINANZIAMENTI DI MEDIO/LUNGO TERMINE ------------------------------------
-
-dt_muto_unicredit  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_unicredit', detectDates = TRUE)
-dt_mutuo_bper  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_BPER', detectDates = TRUE)
-dt_mutuo_intesa  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_intesa', detectDates = TRUE)
-
-setDT(dt_muto_unicredit)
-setDT(dt_mutuo_bper)
-setDT(dt_mutuo_intesa)
-
-
-
-colnames <- c("banca/class", "category", kc_months)
-
-
-dt_gestione_fin_mediolungo <- data.frame(banca = c("unicredit", "unicredit", "unicredit", 
-                                                   "bper","bper", "bper", 
-                                                   "intesa", "intesa","intesa",
-                                                    "parfinco", "parfinco", "parfinco",
-                                                   "nuovo_finanziamento", "nuovo_finanziamento", "nuovo_finanziamento"), 
-                                         category = c("erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo", 
-                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
-                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
-                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
-                                                      "nuova_erogazione_mutuo_MLT", "rimborso_rata_nuovo_mutuo_MLT", "interessi_nuovo_mutuo_MLT"),
-                                         gennaio = NA, febbraio = NA, marzo = NA, aprile = NA,
-                                         maggio = NA, giugno = NA, luglio = NA, agosto = NA, 
-                                         setembre = NA, ottobre = NA, novembre = NA, dicembre = NA)
-
-
-
-setDT(dt_gestione_fin_mediolungo)
