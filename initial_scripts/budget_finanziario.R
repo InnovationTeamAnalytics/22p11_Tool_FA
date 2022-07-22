@@ -6,6 +6,8 @@ library(openxlsx)
 library(innteamUtils)
 library(janitor)
 library(stringr)
+library(lubridate)
+library(xts)
 
 options(scipen = 999)
 
@@ -32,6 +34,24 @@ setDT(dt_t_ipotesi)
 dt_t_consulenze = read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Dettaglio_consulenze', detectDates = TRUE)
 dt_t_consulenze = janitor::clean_names(dt_t_consulenze)
 setDT(dt_t_consulenze)
+
+## Mutui
+dt_t_bper <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_BPER', detectDates = TRUE)
+dt_t_bper = janitor::clean_names(dt_t_bper)
+setDT(dt_t_bper)
+dt_t_bper[, banca := "BPER"]
+
+dt_t_unicredit <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_unicredit', detectDates = TRUE)
+dt_t_unicredit = janitor::clean_names(dt_t_unicredit)
+setDT(dt_t_unicredit)
+dt_t_unicredit[, banca := "Unicredit"]
+
+dt_t_intesa <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_intesa', detectDates = TRUE)
+dt_t_intesa = janitor::clean_names(dt_t_intesa)
+setDT(dt_t_intesa)
+dt_t_intesa[, banca := "Intesa"]
+
+dt_t_mutui <- rbind(dt_t_bper, dt_t_intesa, dt_t_unicredit)
 
 ################################################################################
 
@@ -554,4 +574,116 @@ dt_saldo_tot <- rbind(dt_saldo_gestione_corrente, dt_diff_tot, fill = T)
 #Export
 write.xlsx(dt_uscite_list, file = file.path('processed', 'uscite_tab_budget_fin.xlsx'))
 write.xlsx(dt_uscite_list_tot, file = file.path('processed', 'uscite_tot_tab_budget_fin.xlsx'))
+
+
+
+
+# MUTUI----
+dt_t_mutui[, data := as.Date(data, format = "%Y-%m-%d")]
+current_year <- format(Sys.time(), "%Y")
+
+dt_t_mutui_current <- dt_t_mutui[format(data, "%Y") == current_year][, mese_nome := format(data,"%B")]
+
+kc_months = c("gennaio", "febbraio", "marzo", "aprile", "maggio", "giugno", "luglio", "agosto", "settembre", "ottobre", "novembre", "dicembre")
+
+# Erogazione----
+
+mutui_erogazione = function(nome_banca, data = dt_t_mutui_current) {
+    
+    f <- function(x) {list(0)}
+    dt_mutui_new <- dt_t_mutui_current[,(kc_months) := f()][banca == nome_banca,]
+    dt_mutui_new <- dt_mutui_new[order(data)]
+    if (nrow(dt_mutui_new[is.na(quota_capitale) & is.na(quote_interes) & is.na(spese) & is.na(totale_rata)]) == 0) {
+        dt_mutui_new <- dt_mutui_new[, id := "Erogazione mutuo"]
+    } else {
+        mese_erogazione <- dt_mutui_new[is.na(quota_capitale) & is.na(quote_interes) & is.na(spese) & is.na(totale_rata), mese_nome]
+        importo <- dt_mutui_new[is.na(quota_capitale) & is.na(quote_interes) & is.na(spese) & is.na(totale_rata), debito_residuo]
+        
+        dt_mutui_new[, mese_erogazione] <- importo
+        dt_mutui_new <- dt_mutui_new[, id := "Erogazione mutuo"]
+    
+    }
+
+    return(dt_mutui_new)
+}
+
+
+mutui_erogazione = lapply(unique(dt_t_mutui_current$banca), mutui_erogazione)
+names(mutui_erogazione) = unique(dt_t_mutui_current$banca)
+dt_mutui_erogazione_list <- rbindlist(mutui_erogazione)
+
+dt_mutui_erogazione_grouped <- dt_mutui_erogazione_list[, lapply(.SD, unique), .SDcols = kc_months, by = .(banca, id)]
+
+
+
+# Rimborso rata----
+
+mutui_rimborso = function(nome_banca, data = dt_t_mutui_current) {
+    
+    f <- function(x) {list(0)}
+    dt_mutui_quota <- dt_t_mutui_current[,(kc_months) := f()][banca == nome_banca,]
+    dt_mutui_quota <- dt_mutui_quota[order(data)]
+    
+    mese_quota <- dt_mutui_quota[!is.na(quota_capitale) | !is.na(quote_interes) | !is.na(spese) | !is.na(totale_rata), mese_nome]
+    importo_quota <- dt_mutui_quota[!is.na(quota_capitale) | !is.na(quote_interes) | !is.na(spese) | !is.na(totale_rata), quota_capitale]
+    
+    assign_quota <- function(i) {
+        dt_mutui_quota[, mese_quota[i]] <- importo_quota[i]
+        return(dt_mutui_quota)
+    }
+    
+    dt_mutui_quota <- lapply(c(seq(1:length(mese_quota))), assign_quota)
+    dt_mutui_quota <- rbindlist(dt_mutui_quota)
+    dt_mutui_quota[, id := "Rimborso rata mutuo"]
+    
+    dt_mutui_quota <- dt_mutui_quota[, lapply(.SD, unique), .SDcols = kc_months, by = .(banca, id)][, lapply(.SD, sum), .SDcols = kc_months, by = .(banca, id)]
+    
+    return(dt_mutui_quota)
+}
+
+
+mutui_quota_rata = lapply(unique(dt_t_mutui_current$banca), mutui_rimborso)
+names(mutui_quota_rata) = unique(dt_t_mutui_current$banca)
+dt_mutui_quota_rata_list <- rbindlist(mutui_quota_rata)
+
+dt_mutui_quota_rata_grouped <- dt_mutui_quota_rata_list[, lapply(.SD, unique), .SDcols = kc_months, by = .(banca, id)]
+
+
+# Interessi----
+
+# Rimborso rata----
+
+mutui_interesse = function(nome_banca, data = dt_t_mutui_current) {
+    
+    f <- function(x) {list(0)}
+    dt_mutui_interess <- dt_t_mutui_current[,(kc_months) := f()][banca == nome_banca,]
+    dt_mutui_interess <- dt_mutui_interess[order(data)]
+    
+    mese_quota <- dt_mutui_interess[!is.na(quota_capitale) | !is.na(quote_interes) | !is.na(spese) | !is.na(totale_rata), mese_nome]
+    importo_quota <- dt_mutui_interess[!is.na(quota_capitale) | !is.na(quote_interes) | !is.na(spese) | !is.na(totale_rata), quote_interes]
+    
+    assign_interesse <- function(i) {
+        dt_mutui_interess[, mese_quota[i]] <- importo_quota[i]
+        return(dt_mutui_interess)
+    }
+    
+    dt_mutui_interess <- lapply(c(seq(1:length(mese_quota))), assign_interesse)
+    dt_mutui_interess <- rbindlist(dt_mutui_interess)
+    dt_mutui_interess[, id := "Interessi su mutuo"]
+    
+    dt_mutui_interess <- dt_mutui_interess[, lapply(.SD, unique), .SDcols = kc_months, by = .(banca, id)][, lapply(.SD, sum), .SDcols = kc_months, by = .(banca, id)]
+    
+    return(dt_mutui_interess)
+}
+
+
+mutui_interess = lapply(unique(dt_t_mutui_current$banca), mutui_interesse)
+names(mutui_interess) = unique(dt_t_mutui_current$banca)
+dt_mutui_interess_list <- rbindlist(mutui_interess)
+
+dt_mutui_interess_grouped <- dt_mutui_interess_list[, lapply(.SD, unique), .SDcols = kc_months, by = .(banca, id)]
+
+
+dt_mutui_tot <- rbind(dt_mutui_erogazione_grouped, dt_mutui_quota_rata_grouped, dt_mutui_interess_grouped)
+
 
