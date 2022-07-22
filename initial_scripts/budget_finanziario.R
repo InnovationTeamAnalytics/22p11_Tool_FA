@@ -296,7 +296,7 @@ write.xlsx(dt_uscite_list_tot, file = file.path('processed', 'uscite_tot_tab_bud
 
 
 
-# Trasporto Good Truck --------------------------------------
+# TRASPORTO GOOD TRACK --------------------------------------
 
 dt_input_budget_fin
 dt_t_ipotesi
@@ -304,19 +304,6 @@ dt_t_ipotesi
 dt_t_ipotesi_goodtruck <- dt_t_ipotesi[id == "Uscite Good Truck"]
 dt_trasporto_goodtruck <- dt_input_budget_fin[soggetti_adj == "0000000302" & con_unlg_liv_2_adj == "(Trasporto)"]
 
-# dt_trasporto_goodtruck[, ':=' (
-#     gennaio = ottobre_2021_iva,
-#     febbraio = ottobre_2021_iva,
-#     marzo = novembre_2021_iva,
-#     aprile = dicembre_2021_iva,
-#     maggio = gennaio_lordo_iva,
-#     giugno = febbraio_lordo_iva,
-#     luglio = marzo_lordo_iva,
-#     agosto = aprile_lordo_iva,
-#     settembre = maggio_lordo_iva,
-#     ottobre = giugno_lordo_iva,
-#     novembre = luglio_lordo_iva,
-#     dicembre = agosto_lordo_iva)]
 
 
 dt_trasporto_goodtruck[, ..kc_months]
@@ -355,7 +342,7 @@ dt_trasporto_goodtruck_tot_full <- rbind(dt_trasporto_goodtruck_tot,dt_trasporto
 
 
 
-# Assicurazioni --------------------------
+# ASSICURAZIONI --------------------------
 
 dt_assicurazioni <- clean_names(dt_assicurazioni)
 
@@ -375,3 +362,42 @@ assicurazioni_luglio <- - dt_assicurazioni[periodicita == "SEMESTRALE"]$importo 
 
 assicurazioni_ottobre <- - dt_assicurazioni[periodicita == "TRIMESTRALE"]$importo
 
+
+
+
+
+
+
+
+# GESTIONE FINANZIAMENTI DI MEDIO/LUNGO TERMINE ------------------------------------
+
+dt_muto_unicredit  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_unicredit', detectDates = TRUE)
+dt_mutuo_bper  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_BPER', detectDates = TRUE)
+dt_mutuo_intesa  <- read.xlsx(file.path('inputs', 'support_fin.xlsx'), sheet = 'Mutuo_intesa', detectDates = TRUE)
+
+setDT(dt_muto_unicredit)
+setDT(dt_mutuo_bper)
+setDT(dt_mutuo_intesa)
+
+
+
+colnames <- c("banca/class", "category", kc_months)
+
+
+dt_gestione_fin_mediolungo <- data.frame(banca = c("unicredit", "unicredit", "unicredit", 
+                                                   "bper","bper", "bper", 
+                                                   "intesa", "intesa","intesa",
+                                                    "parfinco", "parfinco", "parfinco",
+                                                   "nuovo_finanziamento", "nuovo_finanziamento", "nuovo_finanziamento"), 
+                                         category = c("erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo", 
+                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
+                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
+                                                      "erogazione_mutuo", "rimborso_rata_mutuo", "interessi_su_mutuo",
+                                                      "nuova_erogazione_mutuo_MLT", "rimborso_rata_nuovo_mutuo_MLT", "interessi_nuovo_mutuo_MLT"),
+                                         gennaio = NA, febbraio = NA, marzo = NA, aprile = NA,
+                                         maggio = NA, giugno = NA, luglio = NA, agosto = NA, 
+                                         setembre = NA, ottobre = NA, novembre = NA, dicembre = NA)
+
+
+
+setDT(dt_gestione_fin_mediolungo)
