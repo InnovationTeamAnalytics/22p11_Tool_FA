@@ -495,7 +495,8 @@ dt_uscite_tesoreria <- dt_uscite_list[soggetti_adj == "0000002035" & con_unlg_li
                                                                         settembre = dt_consulenza_months[mese_scadenza == "settembre", sum(totale), by = "mese_scadenza"][, V1],
                                                                         ottobre = dt_consulenza_months[mese_scadenza == "ottobre", sum(totale), by = "mese_scadenza"][, V1],
                                                                         novembre = dt_consulenza_months[mese_scadenza == "novembre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                        dicembre = dt_consulenza_months[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1])]
+                                                                        dicembre = dt_consulenza_months[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                        cat_cerved = "TESORERIA E CDG")]
 
 
 consulenza_credito <- dt_t_consulenze[, ':=' (scadenza = as.POSIXct(scadenza),
@@ -504,17 +505,18 @@ consulenza_credito <- dt_t_consulenze[, ':=' (scadenza = as.POSIXct(scadenza),
 dt_consulenza_months_2 <- merge(consulenza_credito, data.table(mese = c(kc_months)), by.x = "mese_scadenza", by.y = "mese", all.y = T)
 
 dt_uscite_credito <- dt_uscite_list[soggetti_adj == "0000002031" & con_unlg_liv_2_adj == "(Consulenze)"][, ':=' (gennaio = dt_consulenza_months_2[mese_scadenza == "gennaio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  febbraio = dt_consulenza_months_2[mese_scadenza == "febbraio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  marzo = dt_consulenza_months_2[mese_scadenza == "marzo", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  aprile = dt_consulenza_months_2[mese_scadenza == "aprile", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  maggio = dt_consulenza_months_2[mese_scadenza == "maggio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  giugno = dt_consulenza_months_2[mese_scadenza == "giugno", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  luglio = dt_consulenza_months_2[mese_scadenza == "luglio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  agosto = dt_consulenza_months_2[mese_scadenza == "agosto", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  settembre = dt_consulenza_months_2[mese_scadenza == "settembre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  ottobre = dt_consulenza_months_2[mese_scadenza == "ottobre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  novembre = dt_consulenza_months_2[mese_scadenza == "novembre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  dicembre = dt_consulenza_months_2[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1])]
+                                                                                                                 febbraio = dt_consulenza_months_2[mese_scadenza == "febbraio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 marzo = dt_consulenza_months_2[mese_scadenza == "marzo", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 aprile = dt_consulenza_months_2[mese_scadenza == "aprile", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 maggio = dt_consulenza_months_2[mese_scadenza == "maggio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 giugno = dt_consulenza_months_2[mese_scadenza == "giugno", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 luglio = dt_consulenza_months_2[mese_scadenza == "luglio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 agosto = dt_consulenza_months_2[mese_scadenza == "agosto", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 settembre = dt_consulenza_months_2[mese_scadenza == "settembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 ottobre = dt_consulenza_months_2[mese_scadenza == "ottobre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 novembre = dt_consulenza_months_2[mese_scadenza == "novembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 dicembre = dt_consulenza_months_2[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                 cat_cerved = "CREDITO")]
 
 consulenza_rating <- dt_t_consulenze[, ':=' (scadenza = as.POSIXct(scadenza),
                                               iva = imponibile * 0.22)][, ':=' (totale = - imponibile - iva)][, mese_scadenza := format(scadenza,"%B")][progetto %like% "Rating"]
@@ -522,19 +524,21 @@ consulenza_rating <- dt_t_consulenze[, ':=' (scadenza = as.POSIXct(scadenza),
 dt_consulenza_months_3 <- merge(consulenza_rating, data.table(mese = c(kc_months)), by.x = "mese_scadenza", by.y = "mese", all.y = T)
 
 dt_uscite_rating <- dt_uscite_list[soggetti_adj == "0000002031" & con_unlg_liv_2_adj == "(Consulenze)"][, ':=' (gennaio = dt_consulenza_months_3[mese_scadenza == "gennaio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  febbraio = dt_consulenza_months_3[mese_scadenza == "febbraio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  marzo = dt_consulenza_months[mese_scadenza == "marzo", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  aprile = dt_consulenza_months_3[mese_scadenza == "aprile", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  maggio = dt_consulenza_months_3[mese_scadenza == "maggio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  giugno = dt_consulenza_months_3[mese_scadenza == "giugno", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  luglio = dt_consulenza_months_3[mese_scadenza == "luglio", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  agosto = dt_consulenza_months_3[mese_scadenza == "agosto", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  settembre = dt_consulenza_months_3[mese_scadenza == "settembre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  ottobre = dt_consulenza_months_3[mese_scadenza == "ottobre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  novembre = dt_consulenza_months_3[mese_scadenza == "novembre", sum(totale), by = "mese_scadenza"][, V1],
-                                                                                                                  dicembre = dt_consulenza_months_3[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1])]
+                                                                                                                febbraio = dt_consulenza_months_3[mese_scadenza == "febbraio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                marzo = dt_consulenza_months[mese_scadenza == "marzo", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                aprile = dt_consulenza_months_3[mese_scadenza == "aprile", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                maggio = dt_consulenza_months_3[mese_scadenza == "maggio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                giugno = dt_consulenza_months_3[mese_scadenza == "giugno", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                luglio = dt_consulenza_months_3[mese_scadenza == "luglio", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                agosto = dt_consulenza_months_3[mese_scadenza == "agosto", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                settembre = dt_consulenza_months_3[mese_scadenza == "settembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                ottobre = dt_consulenza_months_3[mese_scadenza == "ottobre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                novembre = dt_consulenza_months_3[mese_scadenza == "novembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                dicembre = dt_consulenza_months_3[mese_scadenza == "dicembre", sum(totale), by = "mese_scadenza"][, V1],
+                                                                                                                cat_cerved = "RATING")]
 
 dt_uscite_consulenza <- rbind(dt_uscite_tesoreria, dt_uscite_credito, dt_uscite_rating)
+
 
 # SALDO GESTIONE----
 
